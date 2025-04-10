@@ -512,7 +512,7 @@ export default function DocumentPage({ params }) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ef9441]-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1087da]-500"></div>
         </div>
       </div>
     );
@@ -525,7 +525,7 @@ export default function DocumentPage({ params }) {
           <h2 className="text-xl font-semibold mb-2">Document not found</h2>
           <button 
             onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-[#ef9441] text-white rounded-lg"
+            className="px-4 py-2 bg-[#1087da] text-white rounded-lg"
           >
             Return to Dashboard
           </button>
@@ -550,7 +550,7 @@ export default function DocumentPage({ params }) {
               {document.fileUrl ? (
                 pdfLoading ? (
                   <div className="flex flex-col justify-center items-center h-[500px] md:h-[700px] w-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ef9441]-500 mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1087da]-500 mb-4"></div>
                     <p className="text-gray-500">Loading PDF viewer...</p>
                   </div>
                 ) : null
@@ -629,7 +629,7 @@ export default function DocumentPage({ params }) {
                     <div className="flex items-center my-1">
                       <button 
                         onClick={downloadPdf}
-                        className="flex items-center px-3 py-1 text-xs bg-[#ef9441] text-white rounded-md hover:bg-[#d88537]"
+                        className="flex items-center px-3 py-1 text-xs bg-[#1087da] text-white rounded-md hover:bg-[#d88537]"
                         aria-label="Download PDF"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
@@ -647,7 +647,7 @@ export default function DocumentPage({ params }) {
                       onLoadError={onDocumentLoadError}
                       loading={
                         <div className="flex justify-center items-center h-full">
-                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ef9441]-500"></div>
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1087da]-500"></div>
                         </div>
                       }
                       error={

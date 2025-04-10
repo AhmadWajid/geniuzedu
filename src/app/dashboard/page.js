@@ -318,10 +318,10 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <main className="container mx-auto px-6 py-10">
         {/* Upload Section */}
-        <div className="bg-white dark:bg-gray-800 shadow-md p-6 mb-8 border-l-4 border-[#ef9441]">
+        <div className="bg-white dark:bg-gray-800 shadow-md p-6 mb-8 border-l-4 border-[#1087da]">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Upload Document</h2>
           <div
-            className="border border-gray-300 dark:border-gray-700 p-8 text-center hover:border-[#ef9441] dark:hover:border-[#ef9441] transition-colors"
+            className="border border-gray-300 dark:border-gray-700 p-8 text-center hover:border-[#1087da] dark:hover:border-[#1087da] transition-colors"
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
           >
@@ -334,7 +334,7 @@ export default function Dashboard() {
             <div className="mt-6 flex flex-col items-center">
               <label className="cursor-pointer">
                 <input type="file" className="hidden" accept=".pdf" onChange={handleFileChange} />
-                <div className="px-6 py-3 bg-[#ef9441] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2">
+                <div className="px-6 py-3 bg-[#1087da] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
@@ -350,7 +350,7 @@ export default function Dashboard() {
         </div>
 
         {/* Documents Section */}
-        <div className="bg-white dark:bg-gray-800 shadow-md p-6 border-l-4 border-[#ef9441]">
+        <div className="bg-white dark:bg-gray-800 shadow-md p-6 border-l-4 border-[#1087da]">
           <div className="flex justify-between items-center mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Your Documents</h2>
             {error && (
@@ -374,12 +374,12 @@ export default function Dashboard() {
               {documents.map((doc) => (
                 <div
                   key={doc.id}
-                  className={`relative border-l-4 border-[#ef9441] bg-white dark:bg-gray-800 shadow-md cursor-pointer ${doc.status === 'uploading' ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
+                  className={`relative border-l-4 border-[#1087da] bg-white dark:bg-gray-800 shadow-md cursor-pointer ${doc.status === 'uploading' ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
                   onClick={() => handleDocumentClick(doc.id)}
                 >
                   <div className="p-5">
                     <div className="flex items-start space-x-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-[#ef9441]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-[#1087da]">
                         <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                         <polyline points="14 2 14 8 20 8" />
                         <line x1="16" x2="8" y1="13" y2="13" />

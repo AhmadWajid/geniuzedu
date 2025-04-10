@@ -13,11 +13,11 @@ export default function MarkdownViewer({ content }) {
         rehypePlugins={[rehypeKatex]}
         components={{
           // Customize the rendering of specific elements if needed
-          h1: ({ node, ...props }) => <h1 className="text-3xl font-bold bg-gradient-to-r from-[#ef9441] to-[#fbbf24] 
+          h1: ({ node, ...props }) => <h1 className="text-3xl font-bold bg-gradient-to-r from-[#1087da] to-[#fbbf24] 
              dark:from-[#f59e0b] dark:to-[#fcd34d] bg-clip-text text-transparent 
              pb-4 mb-8 border-b-2 border-orange-200 dark:border-orange-800" {...props} />,
           h2: ({ node, ...props }) => <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 
-                   mt-12 mb-6 pb-2 border-b border-[#ef9441]-50 dark:border-gray-800" {...props} />,
+                   mt-12 mb-6 pb-2 border-b border-[#1087da]-50 dark:border-gray-800" {...props} />,
           h3: ({ node, ...props }) => <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100
                    mt-10 mb-4" {...props} />,
           h4: ({ node, ...props }) => <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-100
@@ -25,7 +25,7 @@ export default function MarkdownViewer({ content }) {
           h5: ({ node, ...props }) => <h5 className="text-lg font-semibold text-gray-800 dark:text-gray-100
                    mt-8 mb-4" {...props} />,
           p: ({ node, ...props }) => <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-2 mt-6 text-lg" {...props} />,
-          strong: ({ node, ...props }) => <strong className="font-semibold text-[#ef9441] dark:text-[#fbbf24] 
+          strong: ({ node, ...props }) => <strong className="font-semibold text-[#1087da] dark:text-[#fbbf24] 
                bg-[#fff7ed] dark:bg-[#3a2e1e] px-1 rounded" {...props} />,
                table: ({ node, ...props }) => (
                 <div className="overflow-x-auto">

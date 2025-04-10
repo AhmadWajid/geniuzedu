@@ -42,7 +42,7 @@ export default function CustomInstructionsForm({ customInstructions, onInstructi
             Custom Instructions
             <span className="text-xs font-normal text-gray-500 dark:text-gray-400">(Optional)</span>
           </label>
-          <button className="text-xs text-[#ef9441] dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+          <button className="text-xs text-[#1087da] dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
             Show Example
           </button>
         </div>

@@ -26,7 +26,7 @@ const Hero = () => {
           <div className="flex flex-col items-center lg:items-start w-full">
             <h1 className="self-stretch text-center lg:text-left font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight">
               <span className="whitespace-nowrap text-black">Learn Faster.</span><br/>
-              <span className="whitespace-nowrap text-[#ef9441]">Learn Quicker.</span>
+              <span className="whitespace-nowrap text-[#1087da]">Learn Quicker.</span>
             </h1>
             
             <p className="mt-6 text-lg sm:text-xl leading-8 text-black max-w-[434px] text-center lg:text-left">
@@ -35,7 +35,7 @@ const Hero = () => {
             
             <div className="mt-7 relative">
               <Link
-                className="group relative rounded-2xl bg-[#ef9441] overflow-hidden transition-all duration-300 text-base md:text-xl lg:text-xl font-semibold text-white px-10 md:px-8 lg:px-12 py-4 md:py-4 lg:py-6"
+                className="group relative rounded-2xl bg-[#1087da] overflow-hidden transition-all duration-300 text-base md:text-xl lg:text-xl font-semibold text-white px-10 md:px-8 lg:px-12 py-4 md:py-4 lg:py-6"
                 href={isLoggedIn ? "/dashboard" : "/signup"}
               >
                 Get Started

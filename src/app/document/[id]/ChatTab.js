@@ -88,7 +88,7 @@ const ChatTab = ({ document, documentId }) => {
             key={index} 
             className={`${
               message.role === 'user' 
-                ? 'bg-[#ef9441]-100 dark:bg-[#ef9441]-900 ml-auto' 
+                ? 'bg-[#1087da]-100 dark:bg-[#1087da]-900 ml-auto' 
                 : 'bg-gray-100 dark:bg-gray-800 mr-auto'
             } p-3 rounded-lg max-w-[80%] shadow-sm`}
           >
@@ -117,7 +117,7 @@ const ChatTab = ({ document, documentId }) => {
           />
           <button
             type="submit"
-            className="p-3 bg-[#ef9441] text-white hover:bg-[#ef9441]-700 disabled:bg-[#ef9441]-400"
+            className="p-3 bg-[#1087da] text-white hover:bg-[#1087da]-700 disabled:bg-[#1087da]-400"
             disabled={!input.trim() || isLoading}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
