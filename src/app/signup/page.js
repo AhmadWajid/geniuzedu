@@ -127,7 +127,7 @@ export default function SignUp() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#ef9441] focus:border-[#ef9441] sm:text-sm text-black"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#ef9441] focus:border-[#ef9441]"
                 />
               </div>
 
@@ -141,7 +141,7 @@ export default function SignUp() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#ef9441] focus:border-[#ef9441] sm:text-sm text-black"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#ef9441] focus:border-[#ef9441]"
                 />
               </div>
 
@@ -155,7 +155,7 @@ export default function SignUp() {
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#ef9441] focus:border-[#ef9441] sm:text-sm text-black"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#ef9441] focus:border-[#ef9441]"
                 />
               </div>
 
