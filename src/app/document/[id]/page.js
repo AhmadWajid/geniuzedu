@@ -11,7 +11,6 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import InteractivePanel from './InteractivePanel';
 import * as Tesseract from 'tesseract.js';
-
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
 
 export default function DocumentPage({ params }) {
@@ -24,6 +23,7 @@ export default function DocumentPage({ params }) {
   const [document, setDocument] = useState(null);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
+  const [pageInputValue, setPageInputValue] = useState(''); // New state for page input
   const [pdfLoading, setPdfLoading] = useState(true);
   const [pdfError, setPdfError] = useState(null);
   const [scale, setScale] = useState(1.0); // Add state for zoom control
@@ -45,6 +45,9 @@ export default function DocumentPage({ params }) {
   const [customInstructions, setCustomInstructions] = useState('');
   // Add state for PDF text content
   const [pdfTextContent, setPdfTextContent] = useState('');
+  // Add state for content extraction status
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionProgress, setExtractionProgress] = useState(0);
 
   // Add these new state variables for flashcards
   const [flashcardsContent, setFlashcardsContent] = useState([]);
@@ -96,6 +99,12 @@ export default function DocumentPage({ params }) {
           setFlashcardsContent(documentData.flashcards);
           setGeneratedContent(prev => ({...prev, flashcards: true}));
         }
+        
+        // Check if text content has already been extracted
+        if (documentData.extractedText) {
+          console.log("Using previously extracted text content");
+          setPdfTextContent(documentData.extractedText);
+        }
       } else {
         console.error("No such document!");
         router.push('/dashboard');
@@ -108,20 +117,134 @@ export default function DocumentPage({ params }) {
     }
   };
 
+  // Function to save extracted text to Firestore
+  const saveExtractedTextToFirestore = async (text) => {
+    try {
+      if (!user || !document) return;
+      
+      const uidFromParams = searchParams.get('uid');
+      const userId = uidFromParams || user.uid;
+      
+      const docRef = doc(db, `users/${userId}/documents`, documentId);
+      await updateDoc(docRef, {
+        extractedText: text
+      });
+      
+      console.log("Extracted text saved to Firestore");
+    } catch (error) {
+      console.error("Error saving extracted text to Firestore:", error);
+    }
+  };
+
   // Function to handle when PDF document loads successfully
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
     setPdfLoading(false);
+    
+    // Check if we need to extract text content
+    if (!document.extractedText || document.extractedText.trim() === '') {
+      extractAllPagesContent(numPages);
+    }
   };
 
-  // Function to handle PDF document load error
-  const onDocumentLoadError = (error) => {
-    console.error("PDF load error:", error);
-    setPdfError(`Error loading PDF: ${error.message}`);
-    setPdfLoading(false);
+  // Updated function to extract text from all pages
+  const extractAllPagesContent = async (totalPages) => {
+    try {
+      // Check if we already have the content
+      if (pdfTextContent && pdfTextContent.length > 0) {
+        console.log("Using existing extracted content");
+        return;
+      }
+      
+      // Check if there's already an extraction in progress
+      if (isExtracting) {
+        console.log("Extraction already in progress");
+        return;
+      }
+      
+      setIsExtracting(true);
+      setExtractionProgress(0);
+      console.log(`Starting to extract text from all ${totalPages} pages...`);
+      setPdfTextContent(''); // Clear existing content before adding new content
+      
+      // Get the PDF document instance
+      if (!pdfjs) {
+        setIsExtracting(false);
+        return;
+      }
+      
+      const loadingTask = pdfjs.getDocument(document.fileUrl);
+      const pdfDoc = await loadingTask.promise;
+      
+      let allText = '';
+      
+      // Process each page
+      for (let i = 1; i <= totalPages; i++) {
+        try {
+          console.log(`Extracting text from page ${i}/${totalPages}`);
+          setExtractionProgress(Math.floor((i / totalPages) * 100));
+          
+          const page = await pdfDoc.getPage(i);
+          const textContent = await page.getTextContent();
+          
+          // Convert the text content items to a string
+          const textItems = textContent.items.map(item => item.str);
+          const text = textItems.join(' ');
+          
+          // Add the new page text
+          allText += ' ' + text;
+          
+          // If text layer is insufficient, try OCR
+          if (text.trim().length < 50) {
+            console.log(`Page ${i} has little text, attempting OCR...`);
+            
+            // Render page to canvas for OCR
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            await page.render({
+              canvasContext: context,
+              viewport: viewport
+            }).promise;
+            
+            // Small delay to ensure rendering is complete
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const imageData = canvas.toDataURL('image/png');
+            
+            // Use Tesseract.js for OCR
+            const worker = await Tesseract.createWorker('eng');
+            const result = await worker.recognize(imageData);
+            const ocrText = result.data.text;
+            await worker.terminate();
+            
+            if (ocrText && ocrText.length > 0) {
+              allText += ' ' + ocrText;
+            }
+          }
+        } catch (pageError) {
+          console.error(`Error extracting text from page ${i}:`, pageError);
+        }
+      }
+      
+      console.log("Finished extracting text from all pages");
+      setPdfTextContent(allText);
+      
+      // Save the extracted text to Firestore
+      await saveExtractedTextToFirestore(allText);
+      
+      setIsExtracting(false);
+      setExtractionProgress(100);
+    } catch (error) {
+      console.error("Error in extractAllPagesContent:", error);
+      setIsExtracting(false);
+    }
   };
 
-  // Function to extract text content from a PDF page
+  // Function to extract text content from a PDF page (keep this for individual page loads)
   const extractTextContent = async (page) => {
     try {
       const textContent = await page.getTextContent();
@@ -129,26 +252,7 @@ export default function DocumentPage({ params }) {
       const textItems = textContent.items.map(item => item.str);
       const text = textItems.join(' ');
       
-      console.log("Extracted PDF text content:", text.substring(0, 200) + "...");
-
-      // Update the text content with the new page text
-      setPdfTextContent(prevText => {
-        const updatedText = prevText + ' ' + text;
-        
-        // Check if the full text is too short after adding this page
-        if (updatedText.length < 300) {
-          console.log("Text content is too short, attempting OCR...");
-          // Use OCR as a fallback when text layer doesn't provide enough text
-          performOCROnPage(page).then(ocrText => {
-            if (ocrText && ocrText.length > 0) {
-              console.log("OCR extracted text:", ocrText.substring(0, 200) + "...");
-              setPdfTextContent(prevText => prevText + ' ' + ocrText);
-            }
-          });
-        }
-        
-        return updatedText;
-      });
+      console.log("Extracted PDF text content from current page:", text.substring(0, 200) + "...");
       
       return text;
     } catch (error) {
@@ -157,49 +261,10 @@ export default function DocumentPage({ params }) {
     }
   };
 
-  // New function to perform OCR on a PDF page
-  const performOCROnPage = async (page) => {
-    try {
-      // Check if we're in a browser environment
-      if (typeof window === 'undefined' || !window.document) {
-        console.log("OCR skipped: Not in browser environment");
-        return '';
-      }
-      
-      // Convert the PDF page to an image for OCR
-      const viewport = page.getViewport({ scale: 1.5 }); // Higher scale for better OCR quality
-      const canvas = window.document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      
-      // Render the PDF page to the canvas
-      await page.render({
-        canvasContext: context,
-        viewport: viewport
-      }).promise;
-      
-      // Get the image data URL from the canvas
-      const imageData = canvas.toDataURL('image/png');
-      
-      console.log("Starting OCR process...");
-      // Use Tesseract.js to extract text from the image
-      const worker = await Tesseract.createWorker('eng');
-      const result = await worker.recognize(imageData);
-      await worker.terminate();
-      
-      return result.data.text;
-    } catch (error) {
-      console.error("OCR error:", error);
-      return '';
-    }
-  };
-
   // Function to handle when a page has been rendered
   const onPageLoadSuccess = async (page) => {
-    // Extract text from the page
-    await extractTextContent(page);
+    // No need to extract text on each page load as we're now doing it all at once
+    // and storing in Firebase
   };
 
   // Function to handle tab switching
@@ -311,7 +376,7 @@ export default function DocumentPage({ params }) {
     }
   };
 
-  // Update the generateContent function to save to Firestore
+  // Update the generateContent function to use saved content from Firestore
   const generateContent = async (contentType) => {
     if (contentType === 'notes') {
       try {
@@ -320,8 +385,15 @@ export default function DocumentPage({ params }) {
         
         console.log('Starting notes generation');
         
-        // Use the extracted PDF text content if available, otherwise fallback to document.fileText
-        const docText = pdfTextContent || document.fileText || 
+        // Check if text extraction is complete
+        if (isExtracting) {
+          alert("Text extraction is still in progress. Please wait until it completes.");
+          setIsGenerating(false);
+          return;
+        }
+        
+        // Use the extracted PDF text content if available
+        const docText = pdfTextContent || document?.extractedText || 
                         "This is a sample document for testing note generation. " +
                         "Please upload a real document with text content for proper notes.";
         
@@ -365,15 +437,21 @@ export default function DocumentPage({ params }) {
         setIsGenerating(false);
       }
     } else if (contentType === 'flashcards') {
-      // Add flashcard generation
       try {
         setIsGenerating(true);
         setFlashcardsError(null);
         
         console.log('Starting flashcards generation');
         
-        // Use the extracted PDF text content if available, otherwise fallback to document.fileText
-        const docText = pdfTextContent || document.fileText || 
+        // Check if text extraction is complete
+        if (isExtracting) {
+          alert("Text extraction is still in progress. Please wait until it completes.");
+          setIsGenerating(false);
+          return;
+        }
+        
+        // Use the extracted PDF text content if available
+        const docText = pdfTextContent || document?.extractedText || 
                         "This is a sample document for testing flashcard generation. " +
                         "Please upload a real document with text content for proper flashcards.";
         
@@ -488,6 +566,24 @@ export default function DocumentPage({ params }) {
   const zoomOut = () => setScale(prevScale => Math.max(prevScale - 0.2, 0.5));
   const resetZoom = () => setScale(1.0);
 
+  // Handle page input change
+  const handlePageInputChange = (e) => {
+    setPageInputValue(e.target.value);
+  };
+
+  // Handle page input submission
+  const handlePageSubmit = (e) => {
+    e.preventDefault();
+    const page = parseInt(pageInputValue, 10);
+    if (isNaN(page)) return;
+    
+    // Make sure the page is within valid range
+    if (page >= 1 && page <= numPages) {
+      setPageNumber(page);
+      setPageInputValue(''); // Reset input after submission
+    }
+  };
+
   // Updated page navigation functions
   const goToPrevPage = () => setPageNumber(prevPageNumber => 
     prevPageNumber > 1 ? prevPageNumber - 1 : prevPageNumber
@@ -512,7 +608,7 @@ export default function DocumentPage({ params }) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#58b595]-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ef9441]-500"></div>
         </div>
       </div>
     );
@@ -525,7 +621,7 @@ export default function DocumentPage({ params }) {
           <h2 className="text-xl font-semibold mb-2">Document not found</h2>
           <button 
             onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-[#58b595] text-white rounded-lg"
+            className="px-4 py-2 bg-[#ef9441] text-white rounded-lg"
           >
             Return to Dashboard
           </button>
@@ -543,14 +639,28 @@ export default function DocumentPage({ params }) {
             Uploaded on {document.createdAt?.toDate ? new Date(document.createdAt.toDate()).toLocaleDateString() : 'Unknown date'}
           </p>
         </div>
+
+        {/* Show extraction progress when extracting text */}
+        {isExtracting && (
+          <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg">
+            <div className="flex items-center">
+              <div className="mr-2 animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500"></div>
+              <span>Extracting document text: {extractionProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+              <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${extractionProgress}%` }}></div>
+            </div>
+          </div>
+        )}
+        
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
           {/* Document Viewer Panel - Left Side */}
-          <div className="w-full lg:w-1/2 overflow-hidden">
+          <div className="w-full lg:w-1/2 ">
             <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-gray-900/50 rounded-lg mx-auto">
               {document.fileUrl ? (
                 pdfLoading ? (
                   <div className="flex flex-col justify-center items-center h-[500px] md:h-[700px] w-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#58b595]-500 mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ef9441]-500 mb-4"></div>
                     <p className="text-gray-500">Loading PDF viewer...</p>
                   </div>
                 ) : null
@@ -564,7 +674,7 @@ export default function DocumentPage({ params }) {
                 <>
                   {/* Enhanced responsive controls */}
                   <div className="flex flex-wrap items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                    {/* Page navigation controls */}
+                    {/* Page navigation controls with new page input */}
                     <div className="flex items-center space-x-2 my-1">
                       <button 
                         onClick={goToPrevPage}
@@ -577,9 +687,19 @@ export default function DocumentPage({ params }) {
                         </svg>
                       </button>
                       
-                      <span className="text-sm">
-                        Page {pageNumber} of {numPages || '?'}
-                      </span>
+                      {/* Page display with input form */}
+                      <form onSubmit={handlePageSubmit} className="flex items-center">
+                        <span className="text-sm mr-1">Page</span>
+                        <input
+                          type="text"
+                          value={pageInputValue}
+                          onChange={handlePageInputChange}
+                          placeholder={pageNumber.toString()}
+                          className="w-12 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
+                          aria-label="Go to page"
+                        />
+                        <span className="text-sm mx-1">of {numPages || '?'}</span>
+                      </form>
                       
                       <button 
                         onClick={goToNextPage}
@@ -629,7 +749,7 @@ export default function DocumentPage({ params }) {
                     <div className="flex items-center my-1">
                       <button 
                         onClick={downloadPdf}
-                        className="flex items-center px-3 py-1 text-xs bg-[#58b595] text-white rounded-md hover:bg-[#d88537]"
+                        className="flex items-center px-3 py-1 text-xs bg-[#ef9441] text-white rounded-md hover:bg-[#d88537]"
                         aria-label="Download PDF"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
@@ -640,14 +760,14 @@ export default function DocumentPage({ params }) {
                     </div>
                   </div>
                   
-                  <div className="w-full h-[500px] md:h-[700px] border-0 overflow-auto">
+                  {/* PDF Container with horizontal scroll enabled */}
+                  <div className="w-full h-[500px] md:h-[700px] border-0 overflow-x-auto overflow-y-auto">
                     <Document
                       file={document.fileUrl}
                       onLoadSuccess={onDocumentLoadSuccess}
-                      onLoadError={onDocumentLoadError}
                       loading={
                         <div className="flex justify-center items-center h-full">
-                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#58b595]-500"></div>
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ef9441]-500"></div>
                         </div>
                       }
                       error={
@@ -657,7 +777,7 @@ export default function DocumentPage({ params }) {
                       }
                       className={`${pdfLoading ? 'hidden' : 'block'}`}
                     >
-                      {/* Change to only render current page for better performance */}
+                      {/* Page component with proper width handling */}
                       <Page
                         pageNumber={pageNumber}
                         onLoadSuccess={onPageLoadSuccess}
@@ -666,6 +786,7 @@ export default function DocumentPage({ params }) {
                         renderAnnotationLayer={true}
                         scale={scale}
                         renderZoomLayer={false}
+                        width={null} // Let the page determine its own width based on scale
                       />
                     </Document>
                   </div>
@@ -692,6 +813,8 @@ export default function DocumentPage({ params }) {
             flashcardsContent={flashcardsContent}
             flashcardsError={flashcardsError}
             isGenerating={isGenerating}
+            isExtracting={isExtracting}
+            extractionProgress={extractionProgress}
             customInstructions={customInstructions}
             onTabChange={handleTabChange}
             onGenerateContent={generateContent}

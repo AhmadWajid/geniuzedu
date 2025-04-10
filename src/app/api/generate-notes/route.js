@@ -41,7 +41,7 @@ const RESPONSE_PROCESSORS = {
 
 // Utility function to call Gemini API
 async function callGeminiApi(prompt, contentType = 'notes') {
-  console.log(`Calling Gemini API for generation...`);
+  console.log(`Calling Gemini API for generation...` +prompt);
   const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
     method: 'POST',
     headers: {

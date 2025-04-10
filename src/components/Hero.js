@@ -38,7 +38,7 @@ const Hero = () => {
                 className="group relative rounded-2xl bg-[#58b595] overflow-hidden transition-all duration-300 text-base md:text-xl lg:text-xl font-semibold text-white px-10 md:px-8 lg:px-12 py-4 md:py-4 lg:py-6"
                 href={isLoggedIn ? "/dashboard" : "/signup"}
               >
-                Get Started
+                {isLoggedIn ? "Dashboard" : "Get Started"}
               </Link>
             </div>            
           </div>

@@ -32,6 +32,8 @@ const NotesTab = ({
   notesContent,
   notesError,
   isGenerating,
+  isExtracting,
+  extractionProgress,
   customInstructions,
   onGenerateContent,
   onInstructionsChange,
@@ -76,9 +78,24 @@ const NotesTab = ({
               rows={3}
             />
           </div>
+          
+          {/* Show extraction status when in progress */}
+          {isExtracting && (
+            <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg">
+              <div className="flex items-center">
+                <div className="mr-2 animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500"></div>
+                <span>Extracting document text: {extractionProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${extractionProgress}%` }}></div>
+              </div>
+              <p className="text-xs mt-2">Please wait for text extraction to complete before generating notes.</p>
+            </div>
+          )}
+          
           <button
             onClick={() => onGenerateContent('notes')}
-            disabled={isGenerating}
+            disabled={isGenerating || isExtracting}
             className="px-4 py-2 bg-[#58b595] text-white rounded-lg hover:bg-[#e68a30] transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
           >
             {isGenerating ? (
@@ -88,6 +105,14 @@ const NotesTab = ({
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 Generating Notes...
+              </>
+            ) : isExtracting ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Extracting Text...
               </>
             ) : (
               <>
@@ -115,6 +140,8 @@ const FlashcardsTab = ({
   flashcardsContent,
   flashcardsError,
   isGenerating,
+  isExtracting,
+  extractionProgress,
   customInstructions,
   onGenerateContent,
   onInstructionsChange,
@@ -227,9 +254,24 @@ const FlashcardsTab = ({
               rows={3}
             />
           </div>
+          
+          {/* Show extraction status when in progress */}
+          {isExtracting && (
+            <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg">
+              <div className="flex items-center">
+                <div className="mr-2 animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500"></div>
+                <span>Extracting document text: {extractionProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${extractionProgress}%` }}></div>
+              </div>
+              <p className="text-xs mt-2">Please wait for text extraction to complete before generating flashcards.</p>
+            </div>
+          )}
+          
           <button
             onClick={() => onGenerateContent('flashcards')}
-            disabled={isGenerating}
+            disabled={isGenerating || isExtracting}
             className="px-4 py-2 bg-[#58b595] text-white rounded-lg hover:bg-[#e68a30] transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
           >
             {isGenerating ? (
@@ -239,6 +281,14 @@ const FlashcardsTab = ({
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 Generating Flashcards...
+              </>
+            ) : isExtracting ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Extracting Text...
               </>
             ) : (
               <>
@@ -273,6 +323,8 @@ const InteractivePanel = ({
   flashcardsContent,
   flashcardsError,
   isGenerating,
+  isExtracting,
+  extractionProgress,
   customInstructions,
   onTabChange,
   onGenerateContent,
@@ -326,6 +378,20 @@ const InteractivePanel = ({
             )}
           </button>
         </div>
+
+        {/* Document info summary with extraction status */}
+        {isExtracting && (
+          <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg">
+            <div className="flex items-center">
+              <div className="mr-2 animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500"></div>
+              <span>Processing document: {extractionProgress}%</span>
+            </div>
+            <p className="text-xs mt-1">Extracting text for AI features. This will be done only once.</p>
+            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+              <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${extractionProgress}%` }}></div>
+            </div>
+          </div>
+        )}
         
         {/* Tabs */}
         <div className="flex border-b mb-4 dark:border-gray-700">
@@ -370,6 +436,8 @@ const InteractivePanel = ({
               notesContent={notesContent}
               notesError={notesError}
               isGenerating={isGenerating}
+              isExtracting={isExtracting}
+              extractionProgress={extractionProgress}
               customInstructions={customInstructions}
               onGenerateContent={onGenerateContent}
               onInstructionsChange={onInstructionsChange}
@@ -383,6 +451,8 @@ const InteractivePanel = ({
               flashcardsContent={flashcardsContent}
               flashcardsError={flashcardsError}
               isGenerating={isGenerating}
+              isExtracting={isExtracting}
+              extractionProgress={extractionProgress}
               customInstructions={customInstructions}
               onGenerateContent={onGenerateContent}
               onInstructionsChange={onInstructionsChange}

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db, storage } from "../../firebase/config";
-// Import signOut directly from firebase/auth
 import { signOut as firebaseSignOut } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { collection, addDoc, getDocs, query, where, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
@@ -37,30 +36,27 @@ export default function Dashboard() {
   const [deleting, setDeleting] = useState(false);
   const router = useRouter();
 
-  // Improved document fetching function
   const fetchUserDocuments = useCallback(async (userId) => {
     try {
       if (!userId) return;
-      
+
       setError(null);
       console.time('Firestore query');
-      
-      // Updated to use user-specific collection path
+
       const q = query(
         collection(db, `users/${userId}/documents`), 
         orderBy("createdAt", "desc")
       );
-      
+
       const querySnapshot = await getDocs(q).catch(err => {
         console.error("Firestore query failed:", err);
         throw new Error(`Firestore query failed: ${err.message}`);
       });
-      
+
       console.timeEnd('Firestore query');
-      
+
       const userDocs = [];
       querySnapshot.forEach(doc => {
-        // Safely extract data with null checks
         const data = doc.data();
         userDocs.push({
           id: doc.id,
@@ -74,7 +70,7 @@ export default function Dashboard() {
           ...data
         });
       });
-      
+
       setDocuments(userDocs.length ? userDocs : [
         {
           id: 'empty-state',
@@ -96,12 +92,11 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Auth state listener with better error handling
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
       setLoading(false);
-      
+
       if (!currentUser) {
         router.push('/');
       } else {
@@ -112,7 +107,7 @@ export default function Dashboard() {
       setError(`Authentication error: ${error.message}`);
       setLoading(false);
     });
-    
+
     return () => unsubscribe();
   }, [router, fetchUserDocuments]);
 
@@ -128,19 +123,15 @@ export default function Dashboard() {
 
   const uploadFileToFirebase = async (file) => {
     if (!file || !user) return null;
-    
+
     try {
       setUploading(true);
       setError(null);
-      
-      // Verify user ID is available
+
       if (!user.uid) {
         throw new Error("User ID not available. Please try logging in again.");
       }
-      
-      console.log("Current user ID:", user.uid);
-      
-      // 1. Create initial document in Firestore to track upload
+
       const docRef = await addDoc(collection(db, `users/${user.uid}/documents`), {
         fileName: file.name,
         userId: user.uid,
@@ -155,21 +146,16 @@ export default function Dashboard() {
         console.error("Document creation failed:", err);
         throw new Error(`Couldn't initialize document record: ${err.message}`);
       });
-      
-      // 2. Upload file to Firebase Storage
+
       const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const userFolderPath = `documents/users/${user.uid}`;
       const filePath = `${userFolderPath}/${fileName}`;
       const storageRef = ref(storage, filePath);
-      
-      console.log("Uploading file to:", filePath);
-      
-      // Safety check for storage path
+
       if (!filePath.includes(user.uid)) {
         throw new Error("Storage path validation failed: User ID not included in path");
       }
-      
-      // Upload to Firebase Storage
+
       await uploadBytes(storageRef, file).catch(err => {
         console.error("Storage upload failed:", err);
         if (err.code === 'storage/unauthorized') {
@@ -177,33 +163,26 @@ export default function Dashboard() {
         }
         throw new Error(`File upload failed: ${err.message}`);
       });
-      
-      console.log("File uploaded successfully to path:", filePath);
-      
-      // 3. Get the download URL
+
       const downloadURL = await getDownloadURL(storageRef).catch(err => {
         console.error("Failed to get download URL:", err);
         throw new Error(`Couldn't get file URL: ${err.message}`);
       });
-      
-      // 4. Save the URL in Firestore
+
       const documentRef = doc(db, `users/${user.uid}/documents`, docRef.id);
       await updateDoc(documentRef, {
         fileUrl: downloadURL,
         status: 'complete',
         lastUpdated: new Date(),
-        storagePath: filePath // Store the storage path for potential future management
+        storagePath: filePath
       }).catch(err => {
         console.error("Document update failed:", err);
         throw new Error(`Couldn't update document with download URL: ${err.message}`);
       });
-      
-      console.log("Document updated with download URL:", downloadURL);
-      
-      // Refresh documents list
+
       await fetchUserDocuments(user.uid);
       router.push(`/document/${docRef.id}`);
-      
+
     } catch (error) {
       console.error("Upload error:", error);
       setError(error.message);
@@ -237,47 +216,38 @@ export default function Dashboard() {
 
   const handleDocumentClick = (documentId) => {
     if (documentId === 'empty-state' || documentId === 'error-state') return;
-    // Pass user ID as query parameter for document access
     router.push(`/document/${documentId}?uid=${user.uid}`);
   };
 
-  // Add function to delete document
   const handleDeleteDocument = async (docId, storagePath, event) => {
-    // Ensure we prevent the event from bubbling up
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     try {
       setDeleting(true);
-      
+
       if (!user || !user.uid) {
         throw new Error("User not authenticated");
       }
-      // Delete document from Firestore
+
       const documentRef = doc(db, `users/${user.uid}/documents`, docId);
       await deleteDoc(documentRef);
-      
-      // Delete file from Storage if path exists
+
       if (storagePath) {
         try {
           const storageRef = ref(storage, storagePath);
           await deleteObject(storageRef);
-          console.log("File deleted from storage:", storagePath);
         } catch (storageErr) {
           console.error("Storage delete error (non-fatal):", storageErr);
-          // Continue even if storage deletion fails
         }
       }
-      
-      // Update UI by filtering out the deleted document
+
       setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== docId));
-      
-      console.log("Document successfully deleted:", docId);
+
       setDeleteConfirm(null);
-      
-      // If documents array is now empty, set it to show the empty state message
+
       if (documents.length === 1) {
         setDocuments([{
           id: 'empty-state',
@@ -285,7 +255,7 @@ export default function Dashboard() {
           isStorageNotice: true
         }]);
       }
-      
+
     } catch (err) {
       console.error("Delete error:", err);
       setError(`Failed to delete document: ${err.message}`);
@@ -294,12 +264,11 @@ export default function Dashboard() {
     }
   };
 
-  // Clear delete confirmation when clicking elsewhere
   useEffect(() => {
     const handleClickOutside = () => {
       setDeleteConfirm(null);
     };
-    
+
     document.addEventListener('click', handleClickOutside);
     return () => {
       document.removeEventListener('click', handleClickOutside);
@@ -315,119 +284,257 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen bg-[#f8f7f2] dark:bg-gray-900 bg-[white] bg-repeat">
       <main className="container mx-auto px-6 py-10">
-        {/* Upload Section */}
-        <div className="bg-white dark:bg-gray-800 shadow-md p-6 mb-8 border-l-4 border-[#58b595]">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Upload Document</h2>
-          <div
-            className="border border-gray-300 dark:border-gray-700 p-8 text-center hover:border-[#58b595] dark:hover:border-[#58b595] transition-colors"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleDrop}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500">
-              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-              <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-              <path d="M12 12v6"></path>
-              <path d="m15 15-3-3-3 3"></path>
-            </svg>
-            <div className="mt-6 flex flex-col items-center">
-              <label className="cursor-pointer">
-                <input type="file" className="hidden" accept=".pdf" onChange={handleFileChange} />
-                <div className="px-6 py-3 bg-[#58b595] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" x2="12" y1="3" y2="15"></line>
-                  </svg>
-                  {uploading ? 'Uploading...' : 'Choose PDF'}
-                </div>
-              </label>
-              <span className="text-gray-500 dark:text-gray-400 mt-3">or drag and drop</span>
+
+        <div className="bg-white dark:bg-gray-800 p-6 mb-8 border-2 border-[#58b595] sketchy-box relative">
+          <div className="absolute -top-3 -left-2 bg-[#58b595] text-white px-4 py-1 skewed-tab transform -rotate-2">
+            <h2 className="text-xl font-bold">Upload Document</h2>
+          </div>
+
+
+          <div className="mt-4 pt-2">
+            <div 
+              className="border-dashed border-2 border-gray-400 dark:border-gray-600 p-8 text-center hover:border-[#58b595] transition-colors bg-[#fbfbf8] dark:bg-gray-800 sketchy-upload-area"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={handleDrop}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-12 w-12 text-[#58b595] sketchy-icon">
+                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                <path d="M12 12v6"></path>
+                <path d="m15 15-3-3-3 3"></path>
+              </svg>
+              <div className="mt-6 flex flex-col items-center">
+                <label className="cursor-pointer">
+                  <input type="file" className="hidden" accept=".pdf" onChange={handleFileChange} />
+                  <div className="px-6 py-3 bg-[#58b595] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2 transform hover:rotate-1 hover:scale-105 sketchy-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" x2="12" y1="3" y2="15"></line>
+                    </svg>
+                    {uploading ? 'Uploading...' : 'Choose PDF'}
+                  </div>
+                </label>
+               
+              </div>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Maximum file size: 20MB</p>
             </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Maximum file size: 20MB</p>
           </div>
         </div>
 
-        {/* Documents Section */}
-        <div className="bg-white dark:bg-gray-800 shadow-md p-6 border-l-4 border-[#58b595]">
-          <div className="flex justify-between items-center mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Your Documents</h2>
-            {error && (
-              <span className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-1">
-                {error}
-              </span>
+        <div className="bg-white dark:bg-gray-800 p-6 border-2 border-[#58b595] sketchy-box relative">
+          <div className="absolute -top-3 -left-2 bg-[#58b595] text-white px-4 py-1 skewed-tab transform -rotate-2">
+            <h2 className="text-xl font-bold">Your Documents</h2>
+          </div>
+
+          {error && (
+            <div className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-1 mt-4 sketchy-error">
+              <span>⚠️ {error}</span>
+            </div>
+          )}
+
+          <div className="mt-4 pt-2">
+            {documents.length === 0 || documents[0]?.isStorageNotice ? (
+              <div className="text-center py-10 border-dashed border-2 border-gray-300 dark:border-gray-700 sketchy-empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-3 sketchy-icon">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                  <path d="M10 10.3c.2-.4.5-.8.9-1a2.1 2.1 0 0 1 2.6.4c.3.4.5.8.5 1.3 0 1.3-2 2-2 2" />
+                  <path d="M12 17h.01" />
+                </svg>
+                <p className="text-gray-500 dark:text-gray-400 ">📚 You haven't uploaded any documents yet</p>
+                <div className="mt-3 flex justify-center">
+                  <svg className="hand-drawn-circle" width="100" height="40" viewBox="0 0 100 40" fill="none">
+                    <ellipse cx="50" cy="20" rx="45" ry="15" stroke="#58b595" strokeWidth="1" strokeDasharray="5 3" />
+                  </svg>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4">
+                {documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className={`relative bg-[#fbfbf8] dark:bg-gray-800 cursor-pointer transform hover:rotate-1 hover:scale-101 transition-transform sketchy-document-card ${doc.status === 'uploading' ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
+                    onClick={() => handleDocumentClick(doc.id)}
+                  >
+
+                    <div className="p-5 pt-6 border-2 border-[#58b595] sketchy-doc-border">
+                      <div className="ml-2 border-l-4 border-[#58b595] pl-3 sketchy-doc-content">
+                        <div className="flex items-start space-x-2">
+                          <div className="flex-1 overflow-hidden">
+                            <div className="flex items-center">
+                              <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate  text-lg">{doc.fileName}</h3>
+                              {doc.status === 'uploading' && (
+                                <span className="ml-2 px-3 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-200 sketchy-status">
+                                  ⏳ Processing
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-start mt-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#58b595" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 ">
+                                {doc.createdAt && doc.createdAt.seconds ? formatDate(new Date(doc.createdAt.seconds * 1000)) : ""}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {!doc.isStorageNotice && (
+                      <button
+                        onClick={(e) => handleDeleteDocument(doc.id, doc.storagePath, e)}
+                        className={`absolute bottom-2 right-2 p-2 rounded-full sketchy-delete-btn
+                          ${deleteConfirm === doc.id ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}
+                        disabled={deleting && deleteConfirm === doc.id}
+                      >
+                        {deleteConfirm === doc.id ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 6 9 17l-5-5" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                            <line x1="10" x2="10" y1="11" y2="17" />
+                            <line x1="14" x2="14" y1="11" y2="17" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
-          {documents.length === 0 || documents[0]?.isStorageNotice ? (
-            <div className="text-center py-10 border border-gray-200 dark:border-gray-700">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-3">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                <path d="M10 10.3c.2-.4.5-.8.9-1a2.1 2.1 0 0 1 2.6.4c.3.4.5.8.5 1.3 0 1.3-2 2-2 2" />
-                <path d="M12 17h.01" />
-              </svg>
-              <p className="text-gray-500 dark:text-gray-400">You haven't uploaded any documents yet</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {documents.map((doc) => (
-                <div
-                  key={doc.id}
-                  className={`relative border-l-4 border-[#58b595] bg-white dark:bg-gray-800 shadow-md cursor-pointer ${doc.status === 'uploading' ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
-                  onClick={() => handleDocumentClick(doc.id)}
-                >
-                  <div className="p-5">
-                    <div className="flex items-start space-x-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-[#58b595]">
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                        <polyline points="14 2 14 8 20 8" />
-                        <line x1="16" x2="8" y1="13" y2="13" />
-                        <line x1="16" x2="8" y1="17" y2="17" />
-                        <line x1="10" x2="8" y1="9" y2="9" />
-                      </svg>
-                      <div className="flex-1 overflow-hidden">
-                        <div className="flex items-center">
-                          <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{doc.fileName}</h3>
-                          {doc.status === 'uploading' && (
-                            <span className="ml-2 px-3 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-200">
-                              Processing
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{doc.createdAt && doc.createdAt.seconds ? formatDate(new Date(doc.createdAt.seconds * 1000)) : ""}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Delete button - only show for actual documents */}
-                  {!doc.isStorageNotice && (
-                    <button
-                      onClick={(e) => handleDeleteDocument(doc.id, doc.storagePath, e)}
-                      className={`absolute top-2 right-2 p-2 ${deleteConfirm === doc.id ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'} hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors`}
-                      disabled={deleting && deleteConfirm === doc.id}
-                    >
-                      {deleteConfirm === doc.id ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M20 6 9 17l-5-5" />
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M3 6h18" />
-                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                          <line x1="10" x2="10" y1="11" y2="17" />
-                          <line x1="14" x2="14" y1="11" y2="17" />
-                        </svg>
-                      )}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="mt-6 py-2 flex justify-center">
+            <div className="sketchy-doodle w-32 h-4 border-b-2 border-[#58b595] opacity-50"></div>
+          </div>
         </div>
       </main>
+
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Kalam:wght@300;400;700&display=swap');
+        
+        . {
+          font-family: 'Caveat', cursive;
+        }
+        
+        .sketchy-box {
+          border-radius: 8px;
+          box-shadow: 3px 3px 0 rgba(0,0,0,0.05);
+          position: relative;
+        }
+        
+        .skewed-tab {
+          border-radius: 4px 4px 0 0;
+          box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+        }
+        
+        .sketchy-underline {
+          position: relative;
+        }
+        
+        .sketchy-underline:after {
+          content: '';
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          left: 3px;
+          top: 3px;
+          background: #e68a30;
+          border-radius: 4px;
+          z-index: -1;
+          opacity: 0.4;
+        }
+        
+        .sketchy-upload-area {
+          border-radius: 8px;
+          position: relative;
+        }
+        
+        .sketchy-upload-area:after {
+          content: '';
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          right: -8px;
+          bottom: -8px;
+          border: 1px dashed #58b595;
+          border-radius: 8px;
+          z-index: -1;
+          opacity: 0.3;
+        }
+        
+        .sketchy-button {
+          border-radius: 4px;
+          position: relative;
+          overflow: visible;
+        }
+        
+        .sketchy-button:after {
+          content: '';
+          position: absolute;
+          top: 3px;
+          left: 3px;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.1);
+          border-radius: 4px;
+          z-index: -1;
+        }
+        
+        .sketchy-icon {
+          filter: url('#sketchy-filter');
+        }
+        
+        .sketchy-document-card {
+          border-radius: 4px;
+          position: relative;
+        }
+        
+        .sketchy-doc-border {
+          border-radius: 4px;
+          position: relative;
+        }
+        
+        .hand-drawn-arrow-container {
+          position: relative;
+        }
+        
+        .hand-drawn-arrow {
+          position: absolute;
+          top: -15px;
+          right: -25px;
+          transform: rotate(15deg);
+        }
+        
+        .sketchy-delete-btn {
+          transition: all 0.2s;
+          border: 1px solid currentColor;
+        }
+        
+        .sketchy-delete-btn:hover {
+          transform: rotate(5deg);
+        }
+        
+        .sketchy-circle {
+          box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+        }
+      `}</style>
+
+      <svg width="0" height="0" style={{position:'absolute'}}>
+        <filter id="sketchy-filter">
+          <feTurbulence baseFrequency="0.01" numOctaves="3" seed="1" />
+          <feDisplacementMap in="SourceGraphic" scale="2" />
+        </filter>
+      </svg>
     </div>
   );
 }

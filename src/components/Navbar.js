@@ -39,7 +39,7 @@ const Navbar = () => {
             <div className="flex flex-col min-w-0">
               <span className="text-lg md:text-2xl font-bold truncate">
                 <span className="text-gray-900">Geniuz</span>
-                <span className="bg-gradient-to-r from-[#58b595] to-[#d87b2e] bg-clip-text text-transparent">Edu</span>
+                <span className="bg-gradient-to-r from-[#58b595] to-[#5aa613] bg-clip-text text-transparent">Edu</span>
               </span>
             </div>
           </Link>
