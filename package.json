@@ -1,0 +1,32 @@
+{
+  "name": "geniuzedu",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@react-pdf-viewer/zoom": "^3.12.0",
+    "canvas": "^3.1.0",
+    "firebase": "^11.6.0",
+    "katex": "^0.16.9",
+    "next": "15.2.4",
+    "pdfjs-dist": "^3.11.174",
+    "prismjs": "^1.29.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^9.1.0",
+    "react-pdf": "^9.2.1",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "tesseract.js": "^6.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4"
+  }
+}
