@@ -130,13 +130,13 @@ export default function Profile() {
                     type="text"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#1087da] focus:border-[#1087da]"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#58b595] focus:border-[#58b595]"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#1087da] hover:bg-[#d87b2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1087da] disabled:opacity-50"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#58b595] hover:bg-[#d87b2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58b595] disabled:opacity-50"
                 >
                   {loading ? 'Updating...' : 'Update Profile'}
                 </button>
@@ -154,7 +154,7 @@ export default function Profile() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#1087da] focus:border-[#1087da]"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#58b595] focus:border-[#58b595]"
                   />
                 </div>
                 <div className="mb-4">
@@ -163,14 +163,14 @@ export default function Profile() {
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#1087da] focus:border-[#1087da]"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#58b595] focus:border-[#58b595]"
                     required
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#1087da] hover:bg-[#d87b2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1087da] disabled:opacity-50"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#58b595] hover:bg-[#d87b2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58b595] disabled:opacity-50"
                 >
                   {loading ? 'Updating...' : 'Update Email'}
                 </button>
@@ -188,7 +188,7 @@ export default function Profile() {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#1087da] focus:border-[#1087da]"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#58b595] focus:border-[#58b595]"
                     required
                   />
                 </div>
@@ -198,14 +198,14 @@ export default function Profile() {
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#1087da] focus:border-[#1087da]"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#58b595] focus:border-[#58b595]"
                     required
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#1087da] hover:bg-[#d87b2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1087da] disabled:opacity-50"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#58b595] hover:bg-[#d87b2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58b595] disabled:opacity-50"
                 >
                   {loading ? 'Updating...' : 'Change Password'}
                 </button>

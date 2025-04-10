@@ -39,7 +39,7 @@ const Navbar = () => {
             <div className="flex flex-col min-w-0">
               <span className="text-lg md:text-2xl font-bold truncate">
                 <span className="text-gray-900">Geniuz</span>
-                <span className="bg-gradient-to-r from-[#1087da] to-[#d87b2e] bg-clip-text text-transparent">Edu</span>
+                <span className="bg-gradient-to-r from-[#58b595] to-[#d87b2e] bg-clip-text text-transparent">Edu</span>
               </span>
             </div>
           </Link>
@@ -58,7 +58,7 @@ const Navbar = () => {
                   >
                     Sign Out
                   </button>
-                  <Link className="text-lg md:text-base px-3 md:px-4 py-1.5 md:py-2 bg-[#1087da] rounded font-semibold text-white" href="/dashboard">Dashboard</Link>
+                  <Link className="text-lg md:text-base px-3 md:px-4 py-1.5 md:py-2 bg-[#58b595] rounded font-semibold text-white" href="/dashboard">Dashboard</Link>
                   <Link 
                     className="text-sm md:text-base p-2 text-black hover:text-gray-600" 
                     href="/profile"
@@ -72,7 +72,7 @@ const Navbar = () => {
               ) : (
                 <>
                   <Link className="text-sm md:text-base px-3 md:px-4 py-1.5 md:py-2 text-black" href="/login">Sign In</Link>
-                  <Link className="text-lg md:text-base px-3 md:px-4 py-1.5 md:py-2 bg-[#1087da] rounded font-semibold text-white" href="/signup">Get Started</Link>
+                  <Link className="text-lg md:text-base px-3 md:px-4 py-1.5 md:py-2 bg-[#58b595] rounded font-semibold text-white" href="/signup">Get Started</Link>
                 </>
               )}
             </div>

@@ -45,7 +45,7 @@ export default function PDFViewer({ document, setPdfTextContent }) {
         {document.fileUrl ? (
           pdfLoading ? (
             <div className="flex flex-col justify-center items-center h-[500px] md:h-[700px] w-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1087da]-500 mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#58b595]-500 mb-4"></div>
               <p className="text-gray-500">Loading PDF viewer...</p>
             </div>
           ) : null
@@ -63,7 +63,7 @@ export default function PDFViewer({ document, setPdfTextContent }) {
               onLoadError={onDocumentLoadError}
               loading={
                 <div className="flex justify-center items-center h-full">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1087da]-500"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#58b595]-500"></div>
                 </div>
               }
               error={

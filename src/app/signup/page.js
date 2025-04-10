@@ -85,7 +85,7 @@ export default function SignUp() {
             </h2>
             <p className="mt-2 text-sm text-gray-600">
               Or{' '}
-              <Link href="/login" className="font-medium text-[#1087da] hover:text-[#d87b2e]">
+              <Link href="/login" className="font-medium text-[#58b595] hover:text-[#d87b2e]">
                 sign in to your existing account
               </Link>
             </p>
@@ -127,7 +127,7 @@ export default function SignUp() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#1087da] focus:border-[#1087da]"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#58b595] focus:border-[#58b595]"
                 />
               </div>
 
@@ -141,7 +141,7 @@ export default function SignUp() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#1087da] focus:border-[#1087da]"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#58b595] focus:border-[#58b595]"
                 />
               </div>
 
@@ -155,14 +155,14 @@ export default function SignUp() {
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#1087da] focus:border-[#1087da]"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#58b595] focus:border-[#58b595]"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#1087da] hover:bg-[#d87b2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1087da] disabled:opacity-50"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#58b595] hover:bg-[#d87b2e] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58b595] disabled:opacity-50"
               >
                 {loading ? "Creating account..." : "Create Account"}
               </button>

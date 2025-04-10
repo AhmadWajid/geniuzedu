@@ -15,7 +15,7 @@ const ChatTab = () => {
           placeholder="Ask a question about this document..."
           className="flex-1 p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700"
         />
-        <button className="px-4 py-2 bg-[#1087da] text-white rounded-lg hover:bg-[#e68a30] transition-colors flex items-center gap-2">
+        <button className="px-4 py-2 bg-[#58b595] text-white rounded-lg hover:bg-[#e68a30] transition-colors flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"></line>
             <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -79,7 +79,7 @@ const NotesTab = ({
           <button
             onClick={() => onGenerateContent('notes')}
             disabled={isGenerating}
-            className="px-4 py-2 bg-[#1087da] text-white rounded-lg hover:bg-[#e68a30] transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
+            className="px-4 py-2 bg-[#58b595] text-white rounded-lg hover:bg-[#e68a30] transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
           >
             {isGenerating ? (
               <>
@@ -156,7 +156,7 @@ const FlashcardsTab = ({
         <div className="flex-1 flex flex-col">
           <div className="flex-1 flex flex-col items-center justify-center mb-2">
             <div 
-              className="w-full max-w-md aspect-[3/2] border-l-4 border-[#1087da] bg-white dark:bg-gray-800 rounded-lg shadow-md cursor-pointer transition-all duration-300 perspective-[1000px]"
+              className="w-full max-w-md aspect-[3/2] border-l-4 border-[#58b595] bg-white dark:bg-gray-800 rounded-lg shadow-md cursor-pointer transition-all duration-300 perspective-[1000px]"
               onClick={flipCard}
             >
               <div className={`relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
@@ -230,7 +230,7 @@ const FlashcardsTab = ({
           <button
             onClick={() => onGenerateContent('flashcards')}
             disabled={isGenerating}
-            className="px-4 py-2 bg-[#1087da] text-white rounded-lg hover:bg-[#e68a30] transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
+            className="px-4 py-2 bg-[#58b595] text-white rounded-lg hover:bg-[#e68a30] transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
           >
             {isGenerating ? (
               <>
@@ -296,12 +296,12 @@ const InteractivePanel = ({
 
   return (
     <div className={`transition-all duration-300 ${isFullWidth ? 'w-full' : 'w-full lg:w-1/2'}`}>
-      <div className="bg-white dark:bg-gray-900 shadow-md border-l-4 border-[#1087da] rounded-lg p-4 h-[500px] md:h-[700px] flex flex-col">
+      <div className="bg-white dark:bg-gray-900 shadow-md border-l-4 border-[#58b595] rounded-lg p-4 h-[500px] md:h-[700px] flex flex-col">
         {/* Toggle Full Width Button */}
         <div className="flex justify-end mb-2">
           <button 
             onClick={toggleFullWidth}
-            className="text-gray-500 hover:text-[#1087da] transition-colors flex items-center gap-1 text-sm"
+            className="text-gray-500 hover:text-[#58b595] transition-colors flex items-center gap-1 text-sm"
           >
             {isFullWidth ? (
               <>
@@ -333,7 +333,7 @@ const InteractivePanel = ({
             onClick={() => onTabChange('chat')}
             className={`px-4 py-2 font-medium ${
               activeTab === 'chat'
-                ? 'text-[#1087da] border-b-2 border-[#1087da] dark:text-[#1087da] dark:border-[#1087da]'
+                ? 'text-[#58b595] border-b-2 border-[#58b595] dark:text-[#58b595] dark:border-[#58b595]'
                 : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
@@ -343,7 +343,7 @@ const InteractivePanel = ({
             onClick={() => onTabChange('notes')}
             className={`px-4 py-2 font-medium ${
               activeTab === 'notes'
-                ? 'text-[#1087da] border-b-2 border-[#1087da] dark:text-[#1087da] dark:border-[#1087da]'
+                ? 'text-[#58b595] border-b-2 border-[#58b595] dark:text-[#58b595] dark:border-[#58b595]'
                 : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
@@ -353,7 +353,7 @@ const InteractivePanel = ({
             onClick={() => onTabChange('flashcards')}
             className={`px-4 py-2 font-medium ${
               activeTab === 'flashcards'
-                ? 'text-[#1087da] border-b-2 border-[#1087da] dark:text-[#1087da] dark:border-[#1087da]'
+                ? 'text-[#58b595] border-b-2 border-[#58b595] dark:text-[#58b595] dark:border-[#58b595]'
                 : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
