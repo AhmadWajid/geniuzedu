@@ -93,14 +93,14 @@ const GenerationForm = ({
   return (
     <div className="flex-1 flex flex-col">
       <div className="mb-3">
-        <label htmlFor={`${contentType}-instructions`} className="block text-sm font-medium mb-1">
+        <label htmlFor={`${contentType}-instructions`} className="block text-sm font-medium text-gray-400 mb-1">
           Custom Instructions (Optional)
         </label>
         <textarea
           id={`${contentType}-instructions`}
           value={customInstructions}
           onChange={onInstructionsChange}
-          className="w-full p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700"
+          className="w-full p-2 border rounded-lg text-black  "
           placeholder={placeholders[contentType]}
           rows={3}
         />
@@ -140,7 +140,7 @@ const GenerationForm = ({
 const ChatTab = () => {
   return (
     <div className="h-full flex flex-col">
-      <div className="flex-1 overflow-y-auto mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex-1 overflow-y-auto mb-4 p-4 bg-gray-50   rounded-lg border border-gray-200 ">
         <p className="text-gray-500 text-center py-4">Chat messages will appear here.</p>
         {/* Chat messages would be mapped and displayed here */}
       </div>
@@ -148,7 +148,7 @@ const ChatTab = () => {
         <input
           type="text"
           placeholder="Ask a question about this document..."
-          className="flex-1 p-2 border rounded-lg dark:bg-gray-800 dark:border-gray-700"
+          className="flex-1 p-2 border rounded-lg   "
         />
         <button className="px-4 py-2 bg-[#58b595] text-white rounded-lg hover:bg-[#e68a30] transition-colors flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -182,7 +182,7 @@ const NotesTab = ({
     <div className="h-full flex flex-col">
       {hasValidContent ? (
         <>
-          <div className="flex-1 overflow-y-auto mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex-1 overflow-y-auto mb-4 p-4 bg-white   rounded-lg border border-gray-200 ">
             <MarkdownViewer
                 content={notesContent}
                 className="text-sm prose prose-sm max-w-none dark:prose-invert"></MarkdownViewer>
@@ -272,7 +272,7 @@ const FlashcardsTab = ({
         <div className="flex-1 flex flex-col">
           <div className="flex-1 flex flex-col items-center justify-center mb-2">
             <div 
-              className="w-full max-w-md aspect-[3/2] border-l-4 border-[#58b595] bg-white dark:bg-gray-800 rounded-lg shadow-md cursor-pointer transition-all duration-300 perspective-[1000px]"
+              className="w-full max-w-md aspect-[3/2] border-l-4 border-[#58b595] bg-white   rounded-lg shadow-md cursor-pointer transition-all duration-300 perspective-[1000px]"
               onClick={flipCard}
             >
               <div className={`relative w-full h-full transition-all duration-500 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}>
@@ -288,7 +288,7 @@ const FlashcardsTab = ({
                 </div>
               </div>
             </div>
-            <p className="mt-3 text-gray-600 dark:text-gray-400 text-sm">
+            <p className="mt-3 text-gray-600  text-sm">
               Card {currentCardIndex + 1} of {flashcardsContent.length}
             </p>
           </div>
@@ -296,7 +296,7 @@ const FlashcardsTab = ({
             <button 
               onClick={prevCard} 
               disabled={currentCardIndex === 0}
-              className="px-3 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1 text-sm"
+              className="px-3 py-2 bg-gray-200   rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1 text-sm"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m15 18-6-6 6-6"/>
@@ -306,7 +306,7 @@ const FlashcardsTab = ({
             <button 
               onClick={nextCard} 
               disabled={currentCardIndex === flashcardsContent.length - 1}
-              className="px-3 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1 text-sm"
+              className="px-3 py-2 bg-gray-200   rounded-lg disabled:opacity-50 transition-colors flex items-center gap-1 text-sm"
             >
               Next
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -455,9 +455,10 @@ const InteractivePanel = ({
 
   return (
     <div className={`transition-all duration-300 ${isPanelExpanded ? 'w-full' : 'w-full lg:w-1/2'}`}>
-      <div className="bg-white dark:bg-gray-900 shadow-md border-l-4 border-[#58b595] rounded-lg p-2 sm:p-4 h-[500px] md:h-[700px] flex flex-col">
+      <div className="bg-white  shadow-md border-l-4 border-[#58b595] rounded-lg p-2 sm:p-4 h-[500px] md:h-[700px] flex flex-col">
         {/* Toggle Full Width Button */}
-        <div className="flex justify-end mb-1 sm:mb-2">
+        <div className="flex justify-between items-center mb-1 sm:mb-2">
+          
           <button 
             onClick={toggleFullWidth}
             className="text-gray-500 hover:text-[#58b595] transition-colors flex items-center gap-1 text-xs sm:text-sm"
@@ -470,7 +471,7 @@ const InteractivePanel = ({
                   <line x1="14" y1="10" x2="21" y2="3"></line>
                   <line x1="3" y1="21" x2="10" y2="14"></line>
                 </svg>
-                Show PDF
+                {document?.sourceType === 'youtube' ? 'Show Video' : 'Show PDF'}
               </>
             ) : (
               <>
@@ -501,13 +502,13 @@ const InteractivePanel = ({
         )}
         
         {/* Tabs - Mobile friendly with smaller text and padding */}
-        <div className="flex border-b mb-2 sm:mb-4 dark:border-gray-700 overflow-x-auto">
+        <div className="flex border-b mb-2 sm:mb-4  overflow-x-auto">
           <button
             onClick={() => onTabChange('chat')}
             className={`px-2 sm:px-4 py-1 sm:py-2 font-medium text-sm ${
               activeTab === 'chat'
                 ? 'text-[#58b595] border-b-2 border-[#58b595] dark:text-[#58b595] dark:border-[#58b595]'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                : 'text-gray-500 hover:text-gray-700  dark:hover:text-gray-300'
             }`}
           >
             Chat
@@ -517,7 +518,7 @@ const InteractivePanel = ({
             className={`px-2 sm:px-4 py-1 sm:py-2 font-medium text-sm ${
               activeTab === 'notes'
                 ? 'text-[#58b595] border-b-2 border-[#58b595] dark:text-[#58b595] dark:border-[#58b595]'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                : 'text-gray-500 hover:text-gray-700  dark:hover:text-gray-300'
             }`}
           >
             Notes
@@ -527,7 +528,7 @@ const InteractivePanel = ({
             className={`px-2 sm:px-4 py-1 sm:py-2 font-medium text-sm ${
               activeTab === 'flashcards'
                 ? 'text-[#58b595] border-b-2 border-[#58b595] dark:text-[#58b595] dark:border-[#58b595]'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                : 'text-gray-500 hover:text-gray-700  dark:hover:text-gray-300'
             }`}
           >
             Cards
@@ -537,7 +538,7 @@ const InteractivePanel = ({
             className={`px-2 sm:px-4 py-1 sm:py-2 font-medium text-sm ${
               activeTab === 'test'
                 ? 'text-[#58b595] border-b-2 border-[#58b595] dark:text-[#58b595] dark:border-[#58b595]'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                : 'text-gray-500 hover:text-gray-700  dark:hover:text-gray-300'
             }`}
           >
             Test

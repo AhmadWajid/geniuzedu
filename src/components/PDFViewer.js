@@ -40,12 +40,12 @@ export default function PDFViewer({ fileUrl }) {
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between bg-gray-100   p-2 border-b border-gray-200 ">
         <div className="flex items-center space-x-2">
           <button
             onClick={goToPrevPage}
             disabled={pageNumber <= 1}
-            className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="p-2 rounded hover:bg-gray-200  disabled:opacity-50"
             title="Previous page"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -53,14 +53,14 @@ export default function PDFViewer({ fileUrl }) {
             </svg>
           </button>
           
-          <span className="text-sm font-medium">
+          <span className="text-sm font-medium text-gray-400">
             Page {pageNumber} of {numPages || '--'}
           </span>
           
           <button
             onClick={goToNextPage}
             disabled={pageNumber >= (numPages || 1)}
-            className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="p-2 rounded hover:bg-gray-200  disabled:opacity-50"
             title="Next page"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -73,7 +73,7 @@ export default function PDFViewer({ fileUrl }) {
           <button
             onClick={zoomOut}
             disabled={scale <= 0.5}
-            className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="p-2 rounded hover:bg-gray-200  disabled:opacity-50"
             title="Zoom Out"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -81,14 +81,14 @@ export default function PDFViewer({ fileUrl }) {
             </svg>
           </button>
           
-          <span className="text-sm font-medium">
+          <span className="text-sm font-medium text-gray-400">
             {Math.round(scale * 100)}%
           </span>
           
           <button
             onClick={zoomIn}
             disabled={scale >= 3}
-            className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50"
+            className="p-2 rounded hover:bg-gray-200  disabled:opacity-50"
             title="Zoom In"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -99,7 +99,7 @@ export default function PDFViewer({ fileUrl }) {
           <select
             value={scale}
             onChange={(e) => setScale(parseFloat(e.target.value))}
-            className="p-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600"
+            className="p-1 text-sm border rounded   "
           >
             {ZOOM_LEVELS.map(level => (
               <option key={level} value={level}>
@@ -111,7 +111,7 @@ export default function PDFViewer({ fileUrl }) {
       </div>
 
       {/* PDF Container */}
-      <div ref={containerRef} className="flex-1 overflow-auto bg-gray-200 dark:bg-gray-900 p-4">
+      <div ref={containerRef} className="flex-1 overflow-auto bg-gray-200  p-4">
         {loading && (
           <div className="flex items-center justify-center h-full">
             <div className="animate-pulse text-gray-500">Loading PDF...</div>
@@ -138,7 +138,7 @@ export default function PDFViewer({ fileUrl }) {
             width={containerRef.current?.clientWidth}
             renderTextLayer={false}
             renderAnnotationLayer={false}
-            className="border border-gray-300 dark:border-gray-600 shadow-lg bg-white"
+            className="border border-gray-300  shadow-lg bg-white"
           />
         </Document>
       </div>

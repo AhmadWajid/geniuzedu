@@ -104,10 +104,10 @@ export default function Profile() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 text-black">
         <div className="max-w-md mx-auto">
-          <h1 className="text-3xl font-bold text-center mb-8">Edit Profile</h1>
-          <div className="text-center mb-4 py-1 bg-white dark:bg-gray-800 border-2 border-[#58b595] rounded-lg ">
+          <h1 className="text-3xl text-black font-bold text-center mb-8">Edit Profile</h1>
+          <div className="text-center mb-4 py-1 bg-white   border-2 border-[#58b595] rounded-lg ">
               <button 
                 onClick={() => router.push('/subscription')}
                 className="px-6 py-3 bg-[#58b595] text-white hover:bg-[#48a585] rounded sketchy-button transform hover:rotate-1"
@@ -133,7 +133,7 @@ export default function Profile() {
 
               <form onSubmit={handleUpdateProfile}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Display Name</label>
+                  <label className="block text-sm font-medium text-gray-400 text-gray-700">Display Name</label>
                   <input
                     type="text"
                     value={displayName}
@@ -144,7 +144,7 @@ export default function Profile() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#58b595] hover:bg-[#5aa613] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58b595] disabled:opacity-50"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-400 text-white bg-[#58b595] hover:bg-[#5aa613] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58b595] disabled:opacity-50"
                 >
                   {loading ? 'Updating...' : 'Update Profile'}
                 </button>
@@ -157,7 +157,7 @@ export default function Profile() {
               <h2 className="text-xl font-semibold mb-4">Update Email</h2>
               <form onSubmit={handleUpdateEmail}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <label className="block text-sm font-medium text-gray-400 text-gray-700">Email</label>
                   <input
                     type="email"
                     value={email}
@@ -166,7 +166,7 @@ export default function Profile() {
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Current Password</label>
+                  <label className="block text-sm font-medium text-gray-400 text-gray-700">Current Password</label>
                   <input
                     type="password"
                     value={currentPassword}
@@ -178,7 +178,7 @@ export default function Profile() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#58b595] hover:bg-[#5aa613] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58b595] disabled:opacity-50"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-400 text-white bg-[#58b595] hover:bg-[#5aa613] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58b595] disabled:opacity-50"
                 >
                   {loading ? 'Updating...' : 'Update Email'}
                 </button>
@@ -191,7 +191,7 @@ export default function Profile() {
               <h2 className="text-xl font-semibold mb-4">Change Password</h2>
               <form onSubmit={handleUpdatePassword}>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">New Password</label>
+                  <label className="block text-sm font-medium text-gray-400 text-gray-700">New Password</label>
                   <input
                     type="password"
                     value={newPassword}
@@ -201,7 +201,7 @@ export default function Profile() {
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Current Password</label>
+                  <label className="block text-sm font-medium text-gray-400 text-gray-700">Current Password</label>
                   <input
                     type="password"
                     value={currentPassword}
@@ -213,7 +213,7 @@ export default function Profile() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#58b595] hover:bg-[#5aa613] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58b595] disabled:opacity-50"
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-400 text-white bg-[#58b595] hover:bg-[#5aa613] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#58b595] disabled:opacity-50"
                 >
                   {loading ? 'Updating...' : 'Change Password'}
                 </button>

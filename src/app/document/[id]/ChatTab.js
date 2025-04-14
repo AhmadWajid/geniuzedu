@@ -88,15 +88,15 @@ const ChatTab = ({ document, documentId }) => {
             key={index} 
             className={`${
               message.role === 'user' 
-                ? 'bg-[#58b595]-100 dark:bg-[#58b595]-900 ml-auto' 
-                : 'bg-gray-100 dark:bg-gray-800 mr-auto'
+                ? 'bg-[#58b595]-100  ml-auto' 
+                : 'bg-gray-100   mr-auto'
             } p-3 rounded-lg max-w-[80%] shadow-sm`}
           >
             <p className="text-sm">{message.content}</p>
           </div>
         ))}
         {isLoading && (
-          <div className="flex items-center space-x-2 text-gray-500 dark:text-gray-400">
+          <div className="flex items-center space-x-2 text-gray-500 ">
             <div className="h-3 w-3 bg-gray-400 rounded-full animate-bounce"></div>
             <div className="h-3 w-3 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
             <div className="h-3 w-3 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
@@ -106,13 +106,13 @@ const ChatTab = ({ document, documentId }) => {
       </div>
       
       <form onSubmit={handleSubmit} className="mt-auto">
-        <div className="flex items-center border dark:border-gray-700 rounded-lg overflow-hidden">
+        <div className="flex items-center border  rounded-lg overflow-hidden">
           <input
             type="text"
             value={input}
             onChange={handleInputChange}
             placeholder="Ask a question about this document..."
-            className="flex-1 p-3 border-none focus:ring-0 dark:bg-gray-800 dark:text-gray-100"
+            className="flex-1 p-3 border-none focus:ring-0   "
             disabled={isLoading}
           />
           <button

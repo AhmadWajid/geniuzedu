@@ -673,7 +673,7 @@ export default function DocumentPage({ params }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-gray-50 ">
         <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ef9441]-500"></div>
         </div>
@@ -683,7 +683,7 @@ export default function DocumentPage({ params }) {
 
   if (!document) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-gray-50 ">
         <div className="flex flex-col justify-center items-center min-h-[calc(100vh-64px)]">
           <h2 className="text-xl font-semibold mb-2">Document not found</h2>
           <button
@@ -698,11 +698,11 @@ export default function DocumentPage({ params }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-50 ">
       <div className="container mx-auto px-4 py-6">
         <div className="mb-4 md:mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{document.fileName}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <h1 className="text-2xl font-bold text-gray-900 ">{document.fileName}</h1>
+          <p className="text-sm text-gray-500 ">
             {document.createdAt?.toDate ? new Date(document.createdAt.toDate()).toLocaleDateString() : 'Unknown date'}
           </p>
         </div>
@@ -711,15 +711,34 @@ export default function DocumentPage({ params }) {
           {/* Document Viewer Panel - Left Side - Hidden when panel is expanded */}
           {!isPanelExpanded && (
             <div className="w-full lg:w-1/2 ">
-              <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-gray-900/50 rounded-lg mx-auto">
-                {document.isTextDocument ? (
-                  <div className="w-full h-[500px] md:h-[700px] border-0 overflow-auto bg-white dark:bg-gray-900 p-6">
+              <div className="bg-white  shadow-lg  rounded-lg mx-auto">
+                {document.sourceType === 'youtube' ? (
+                  // Render YouTube iframe for YouTube videos
+                  <div className="w-full h-[500px] md:h-[700px] border-0 overflow-auto bg-white  p-6">
                     <div className="mb-4 border-b pb-2">
-                      <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                      <h2 className="text-xl font-semibold text-gray-800 ">
                         {document.fileName}
                       </h2>
                     </div>
-                    <div className="prose dark:prose-invert max-w-none">
+                    <div className="aspect-video w-full">
+                      <iframe 
+                        src={`https://www.youtube.com/embed/${document.youtubeVideoId}`}
+                        title={document.fileName || "YouTube Video"} 
+                        frameBorder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowFullScreen
+                        className="w-full h-full"
+                      ></iframe>
+                    </div>
+                  </div>
+                ) : document.isTextDocument ? (
+                  <div className="w-full h-[500px] md:h-[700px] border-0 overflow-auto bg-white  p-6">
+                    <div className="mb-4 border-b pb-2">
+                      <h2 className="text-xl font-semibold text-gray-800 ">
+                        {document.fileName}
+                      </h2>
+                    </div>
+                    <div className="prose  max-w-none">
                       {document.textContent?.split('\n').map((line, index) => (
                         <p key={index} className="my-2">
                           {line || <br />}
@@ -730,13 +749,13 @@ export default function DocumentPage({ params }) {
                 ) : (
                   <>
                     {/* Enhanced responsive controls */}
-                    <div className="flex flex-wrap items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                    <div className="flex flex-wrap items-center justify-between p-2 bg-gray-100   border-b border-gray-200  text-black">
                       {/* Page navigation controls with new page input */}
                       <div className="flex items-center space-x-2 my-1">
                         <button 
                           onClick={goToPrevPage}
                           disabled={pageNumber <= 1}
-                          className={`p-2 rounded-md ${pageNumber <= 1 ? 'text-gray-400' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                          className={`p-2 rounded-md ${pageNumber <= 1 ? 'text-gray-400' : 'hover:bg-gray-200 '}`}
                           aria-label="Previous page"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -752,7 +771,7 @@ export default function DocumentPage({ params }) {
                             value={pageInputValue}
                             onChange={handlePageInputChange}
                             placeholder={pageNumber.toString()}
-                            className="w-12 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
+                            className="w-12 px-2 py-1 text-sm border border-gray-300  rounded-md  "
                             aria-label="Go to page"
                           />
                           <span className="text-sm mx-1">of {numPages || '?'}</span>
@@ -761,7 +780,7 @@ export default function DocumentPage({ params }) {
                         <button 
                           onClick={goToNextPage}
                           disabled={pageNumber >= numPages}
-                          className={`p-2 rounded-md ${pageNumber >= numPages ? 'text-gray-400' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                          className={`p-2 rounded-md ${pageNumber >= numPages ? 'text-gray-400' : 'hover:bg-gray-200 '}`}
                           aria-label="Next page"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -774,7 +793,7 @@ export default function DocumentPage({ params }) {
                       <div className="flex items-center space-x-2 my-1">
                         <button 
                           onClick={zoomOut}
-                          className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
+                          className="p-2 rounded-md hover:bg-gray-200 "
                           aria-label="Zoom out"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -784,7 +803,7 @@ export default function DocumentPage({ params }) {
                         <span className="text-sm">{Math.round(scale * 100)}%</span>
                         <button 
                           onClick={zoomIn}
-                          className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
+                          className="p-2 rounded-md hover:bg-gray-200 "
                           aria-label="Zoom in"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -793,7 +812,7 @@ export default function DocumentPage({ params }) {
                         </button>
                         <button 
                           onClick={resetZoom}
-                          className="px-3 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
+                          className="px-3 py-1 text-xs bg-gray-200   rounded-md hover:bg-gray-300 "
                         >
                           Reset
                         </button>
@@ -859,7 +878,7 @@ export default function DocumentPage({ params }) {
             notesContent={notesContent}
             notesError={notesError}
             flashcardsContent={flashcardsContent}
-            flashcardsError={flashcardsError}
+            flashca rdsError={flashcardsError}
             testQuestions={testQuestions}
             testError={testError}
             isGenerating={isGenerating}

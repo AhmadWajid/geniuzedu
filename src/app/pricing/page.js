@@ -201,10 +201,10 @@ export default function PricePage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] py-10">
         <div className="w-16 h-16 border-4 border-[#58b595] border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-600 dark:text-gray-300 font-medium">Loading pricing options...</p>
+        <p className="text-gray-600  font-medium">Loading pricing options...</p>
         <div className="mt-8 w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4 px-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-64 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-lg"></div>
+            <div key={i} className="h-64 bg-gray-100   animate-pulse rounded-lg"></div>
           ))}
         </div>
       </div>
@@ -212,27 +212,27 @@ export default function PricePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7f2] dark:bg-gray-900 bg-[white] bg-repeat">
+    <div className="min-h-screen bg-[#f8f7f2] bg-repeat">
       <main className="container mx-auto px-6 py-10">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white relative inline-block">
+            <h1 className="text-4xl font-bold mb-4 text-gray-900  relative inline-block">
               Simple, Transparent Pricing
               <div className="absolute -bottom-2 left-0 w-full h-1 bg-[#58b595] transform -rotate-1"></div>
             </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600  max-w-2xl mx-auto">
               Choose the perfect plan for your needs. All plans include core features.
             </p>
 
             {/* Billing toggle */}
             <div className="mt-8 flex items-center justify-center space-x-3">
-              <span className={`text-sm ${!isYearly ? "font-bold text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
+              <span className={`text-sm ${!isYearly ? "font-bold text-gray-900 " : "text-gray-500 "}`}>
                 Monthly
               </span>
               <button 
                 onClick={() => setIsYearly(!isYearly)}
-                className="relative inline-flex h-6 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#58b595] focus:ring-offset-2 dark:bg-gray-700"
+                className="relative inline-flex h-6 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#58b595] focus:ring-offset-2  "
                 role="switch"
                 aria-checked={isYearly}
               >
@@ -241,7 +241,7 @@ export default function PricePage() {
                   className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isYearly ? "translate-x-6" : "translate-x-0"}`}
                 />
               </button>
-              <span className={`text-sm ${isYearly ? "font-bold text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
+              <span className={`text-sm ${isYearly ? "font-bold text-gray-900 " : "text-gray-500 "}`}>
                 Yearly <span className="text-xs text-[#e68a30] ml-1">Save up to $20</span>
               </span>
             </div>
@@ -252,7 +252,7 @@ export default function PricePage() {
             {pricingPlans.map((plan) => (
               <div
                 key={plan.id}
-                className={`bg-white dark:bg-gray-800 border-2 ${
+                className={`bg-white   border-2 ${
                   plan.popular 
                     ? "border-[#e68a30] relative transform scale-105 md:scale-105 z-10" 
                     : "border-[#58b595]"
@@ -269,19 +269,19 @@ export default function PricePage() {
                   style={{ backgroundColor: plan.color + "22" }} // Using the plan color with opacity
                 >
                   <div className="text-center">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{plan.name}</h3>
+                    <h3 className="text-lg font-bold text-gray-900 ">{plan.name}</h3>
                   </div>
                 </div>
                 
                 <div className="px-4 pt-3 pb-4">
                   <div className="text-center mb-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 h-8 line-clamp-2">{plan.description}</p>
-                    <div className="mt-2 flex items-baseline justify-center">
-                      <span className="text-3xl font-extrabold text-gray-900 dark:text-white">
+                    <p className="text-sm text-gray-500  h-12 min-h-[3rem] line-clamp-2 mb-2">{plan.description}</p>
+                    <div className="mt-3 flex items-baseline justify-center">
+                      <span className="text-3xl font-extrabold text-gray-900 ">
                         {plan.monthlyPrice === 0 && !isYearly ? "Free" : `$${isYearly ? plan.yearlyPrice : plan.monthlyPrice}`}
                       </span>
                       {(plan.monthlyPrice > 0 || isYearly) && (
-                        <span className="ml-1 text-sm text-gray-500 dark:text-gray-400">
+                        <span className="ml-1 text-sm text-gray-500 ">
                           {isYearly ? "/year" : "/month"}
                         </span>
                       )}
@@ -291,7 +291,7 @@ export default function PricePage() {
                   <div className="space-y-2 mb-4">
                     {plan.features.map((featureGroup, groupIndex) => (
                       <div key={groupIndex}>
-                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 text-sm mb-1 border-b border-gray-200 dark:border-gray-700 pb-1">
+                        <h4 className="font-semibold text-gray-800  text-sm mb-1 border-b border-gray-200  pb-1">
                           {featureGroup.category}
                         </h4>
                         <ul className="space-y-0.5">
@@ -300,7 +300,7 @@ export default function PricePage() {
                               <svg className="text-[#58b595] w-4 h-4 mr-1 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                               </svg>
-                              <span className="text-xs text-gray-600 dark:text-gray-300">{feature}</span>
+                              <span className="text-xs text-gray-600 ">{feature}</span>
                             </li>
                           ))}
                         </ul>
@@ -335,36 +335,36 @@ export default function PricePage() {
           </div>
 
           {/* FAQ Section */}
-          <div className="mt-16 bg-white dark:bg-gray-800 p-6 border-2 border-[#58b595] sketchy-box relative">
+          <div className="mt-16 bg-white   p-6 border-2 border-[#58b595] sketchy-box relative">
             <div className="absolute -top-3 -left-2 bg-[#58b595] text-white px-4 py-1 skewed-tab transform -rotate-2">
               <h2 className="text-xl font-bold">Frequently Asked Questions</h2>
             </div>
 
             <div className="mt-6 pt-2 grid gap-6 md:grid-cols-2">
-              <div className="bg-[#fbfbf8] dark:bg-gray-800 p-5 border-l-4 border-[#58b595] sketchy-doc-content">
-                <h3 className="font-bold text-lg text-gray-900 dark:text-white">Can I change plans later?</h3>
-                <p className="mt-2 text-gray-600 dark:text-gray-300">
+              <div className="bg-[#fbfbf8]   p-5 border-l-4 border-[#58b595] sketchy-doc-content">
+                <h3 className="font-bold text-lg text-gray-900 ">Can I change plans later?</h3>
+                <p className="mt-2 text-gray-600 ">
                   Yes! You can upgrade or downgrade your plan at any time. Changes will be applied at the start of your next billing cycle.
                 </p>
               </div>
               
-              <div className="bg-[#fbfbf8] dark:bg-gray-800 p-5 border-l-4 border-[#58b595] sketchy-doc-content">
-                <h3 className="font-bold text-lg text-gray-900 dark:text-white">Is there a free trial?</h3>
-                <p className="mt-2 text-gray-600 dark:text-gray-300">
+              <div className="bg-[#fbfbf8]   p-5 border-l-4 border-[#58b595] sketchy-doc-content">
+                <h3 className="font-bold text-lg text-gray-900 ">Is there a free trial?</h3>
+                <p className="mt-2 text-gray-600 ">
                   Yes, you can try our Basic plan features for free for 7 days before committing to a subscription.
                 </p>
               </div>
               
-              <div className="bg-[#fbfbf8] dark:bg-gray-800 p-5 border-l-4 border-[#58b595] sketchy-doc-content">
-                <h3 className="font-bold text-lg text-gray-900 dark:text-white">What payment methods do you accept?</h3>
-                <p className="mt-2 text-gray-600 dark:text-gray-300">
+              <div className="bg-[#fbfbf8]   p-5 border-l-4 border-[#58b595] sketchy-doc-content">
+                <h3 className="font-bold text-lg text-gray-900 ">What payment methods do you accept?</h3>
+                <p className="mt-2 text-gray-600 ">
                   We accept all major credit cards, including Visa, Mastercard, American Express, and Discover.
                 </p>
               </div>
               
-              <div className="bg-[#fbfbf8] dark:bg-gray-800 p-5 border-l-4 border-[#58b595] sketchy-doc-content">
-                <h3 className="font-bold text-lg text-gray-900 dark:text-white">Can I cancel anytime?</h3>
-                <p className="mt-2 text-gray-600 dark:text-gray-300">
+              <div className="bg-[#fbfbf8]   p-5 border-l-4 border-[#58b595] sketchy-doc-content">
+                <h3 className="font-bold text-lg text-gray-900 ">Can I cancel anytime?</h3>
+                <p className="mt-2 text-gray-600 ">
                   Absolutely! You can cancel your subscription at any time from your account settings page.
                 </p>
               </div>
@@ -373,8 +373,8 @@ export default function PricePage() {
 
           {/* CTA Section */}
           <div className="mt-12 text-center">
-            <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Need help choosing the right plan?</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">Contact our team for personalized recommendations.</p>
+            <h2 className="text-2xl font-bold mb-2 text-gray-900 ">Need help choosing the right plan?</h2>
+            <p className="text-gray-600  mb-6">Contact our team for personalized recommendations.</p>
             <button className="px-6 py-3 bg-[#58b595] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2 transform hover:rotate-1 hover:scale-105 sketchy-button mx-auto">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />

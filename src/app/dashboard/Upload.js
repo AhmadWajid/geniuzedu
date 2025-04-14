@@ -100,7 +100,7 @@ export default function Upload() {
         router.push(`/document/${documentId}?uid=${user.uid}`);
       };
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 mb-8 border-2 border-[#58b595] sketchy-box relative">
+        <div className="bg-white   p-6 mb-8 border-2 border-[#58b595] sketchy-box relative">
           <div className="absolute -top-3 -left-2 bg-[#58b595] text-white px-4 py-1 skewed-tab transform -rotate-2">
             <h2 className="text-xl font-bold">Upload Document</h2>
           </div>
@@ -108,7 +108,7 @@ export default function Upload() {
 
           <div className="mt-4 pt-2">
             <div 
-              className="border-dashed border-2 border-gray-400 dark:border-gray-600 p-8 text-center hover:border-[#58b595] transition-colors bg-[#fbfbf8] dark:bg-gray-800 sketchy-upload-area"
+              className="border-dashed border-2 border-gray-400  p-8 text-center hover:border-[#58b595] transition-colors bg-[#fbfbf8]   sketchy-upload-area"
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
             >
@@ -132,7 +132,7 @@ export default function Upload() {
                 </label>
                
               </div>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Maximum file size: 20MB</p>
+              <p className="text-xs text-gray-400  mt-2">Maximum file size: 20MB</p>
             </div>
           </div>
         </div>

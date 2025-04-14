@@ -6,7 +6,6 @@ import { auth, db, storage } from "../../firebase/config";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { collection, addDoc, getDocs, query, where, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
-
 // Helper function to format date
 const formatDate = (date) => {
   if (!date) return "";
@@ -26,9 +25,12 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
-  const [uploadType, setUploadType] = useState('pdf'); // new state for upload type
-  const [textContent, setTextContent] = useState(''); // new state for text content
-  const [textTitle, setTextTitle] = useState(''); // new state for text title
+  const [uploadType, setUploadType] = useState('pdf'); // now includes 'pdf', 'text', or 'youtube'
+  const [textContent, setTextContent] = useState('');
+  const [textTitle, setTextTitle] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [youtubeTitle, setYoutubeTitle] = useState('');
+  const [fetchingSubtitles, setFetchingSubtitles] = useState(false);
   const router = useRouter();
 
   const fetchUserDocuments = useCallback(async (userId) => {
@@ -348,6 +350,88 @@ export default function Dashboard() {
     }
   };
 
+  const fetchYoutubeSubtitles = async () => {
+    if (!youtubeUrl.trim()) return;
+    
+    try {
+      setFetchingSubtitles(true);
+      setError(null);
+      
+      // Extract video ID from URL
+      let videoId = '';
+      const url = new URL(youtubeUrl);
+      
+      if (url.hostname === 'youtu.be') {
+        videoId = url.pathname.substring(1);
+      } else if (url.hostname.includes('youtube.com')) {
+        videoId = url.searchParams.get('v');
+      }
+      
+      if (!videoId) {
+        throw new Error("Invalid YouTube URL. Please provide a valid YouTube video link.");
+      }
+      
+      // Call your backend API to fetch subtitles
+      const response = await fetch('/api/youtube-subtitles', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ videoId }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch subtitles");
+      }
+      
+      const data = await response.json();
+      
+      if (!data.transcript || data.transcript.length === 0) {
+        throw new Error("No subtitles found for this video. The video might not have subtitles or they are disabled.");
+      }
+      
+      // Auto-generate title from video if none provided
+      const videoTitle = youtubeTitle.trim() || `YouTube Video: ${data.videoTitle || videoId}`;
+      
+      // Create document entry in Firestore with the subtitles content
+      const docRef = await addDoc(collection(db, `users/${user.uid}/documents`), {
+        fileName: videoTitle,
+        userId: user.uid,
+        createdAt: new Date(),
+        fileType: 'text/plain',
+        status: 'complete',
+        lastUpdated: new Date(),
+        uploadedBy: user.email || user.displayName || user.uid,
+        tags: [],
+        isTextDocument: false, // Changed from true to false since we're using an iframe now
+        youtubeVideoId: videoId,
+        youtubeVideoUrl: youtubeUrl,
+        youtubeEmbedUrl: `https://www.youtube.com/embed/${videoId}`,
+        textContent: data.transcript,
+        extractedText: data.transcript,
+        sourceType: 'youtube',
+        videoTitle: data.videoTitle || ''
+      });
+
+      await fetchUserDocuments(user.uid);
+      
+      // Clear the form
+      setYoutubeUrl('');
+      setYoutubeTitle('');
+      
+      // Navigate to the document page
+      router.push(`/document/${docRef.id}?uid=${user.uid}`);
+      
+    } catch (error) {
+      console.error("YouTube subtitle fetch error:", error);
+      setError(error.message);
+      alert(`Failed to get subtitles: ${error.message}`);
+    } finally {
+      setFetchingSubtitles(false);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = () => {
       setDeleteConfirm(null);
@@ -368,24 +452,24 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7f2] dark:bg-gray-900 bg-[white] bg-repeat">
+    <div className="min-h-screen bg-[#f8f7f2]  bg-[white] bg-repeat">
       <main className="container mx-auto px-6 py-10">
 
-        <div className="bg-white dark:bg-gray-800 p-6 mb-8 border-2 border-[#58b595] sketchy-box relative">
+        <div className="bg-white   p-6 mb-8 border-2 border-[#58b595] sketchy-box relative">
           <div className="absolute -top-3 -left-2 bg-[#58b595] text-white px-4 py-1 skewed-tab transform -rotate-2">
             <h2 className="text-xl font-bold">Upload Document</h2>
           </div>
 
-          {/* Add upload type toggle */}
+          {/* Update upload type toggle to include YouTube */}
           <div className="mt-4 mb-2 flex justify-center">
-            <div className="inline-flex rounded-md shadow-sm p-1 bg-gray-100 dark:bg-gray-800">
+            <div className="inline-flex rounded-md shadow-sm p-1 bg-gray-100  ">
               <button
                 type="button"
                 onClick={() => setUploadType('pdf')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`px-4 py-2 text-sm font-medium text-gray-400 rounded-md transition-colors ${
                   uploadType === 'pdf' 
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' 
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                    ? 'bg-white   text-gray-900  shadow-sm' 
+                    : 'text-gray-500  hover:text-gray-700 '
                 }`}
               >
                 Upload PDF
@@ -393,22 +477,92 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => setUploadType('text')}
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`px-4 py-2 text-sm font-medium text-gray-400 rounded-md transition-colors ${
                   uploadType === 'text' 
-                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' 
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                    ? 'bg-white   text-gray-900  shadow-sm' 
+                    : 'text-gray-500  hover:text-gray-700 '
                 }`}
               >
                 Paste Text
+              </button>
+              <button
+                type="button"
+                onClick={() => setUploadType('youtube')}
+                className={`px-4 py-2 text-sm font-medium text-gray-400 rounded-md transition-colors ${
+                  uploadType === 'youtube' 
+                    ? 'bg-white   text-gray-900  shadow-sm' 
+                    : 'text-gray-500  hover:text-gray-700 '
+                }`}
+              >
+                YouTube Video
               </button>
             </div>
           </div>
 
           <div className="mt-4 pt-2">
-            {uploadType === 'text' ? (
-              <div className="bg-[#fbfbf8] dark:bg-gray-800 border-2 border-gray-400 dark:border-gray-600 p-6 rounded-md hover:border-[#58b595] transition-colors sketchy-text-area">
+            {uploadType === 'youtube' ? (
+              <div className="bg-[#fbfbf8]   border-2 border-gray-400  p-6 rounded-md hover:border-[#58b595] transition-colors sketchy-text-area">
                 <div className="mb-4">
-                  <label htmlFor="textTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label htmlFor="youtubeTitle" className="block text-sm font-medium text-gray-400 text-gray-700  mb-1">
+                    Title (optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="youtubeTitle"
+                    value={youtubeTitle}
+                    onChange={(e) => setYoutubeTitle(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-400  rounded-md focus:outline-none focus:ring-2 focus:ring-[#58b595]   "
+                    placeholder="Enter document title (or we'll use the video title)"
+                  />
+                </div>
+                
+                <div className="mb-4">
+                  <label htmlFor="youtubeUrl" className="block text-sm font-medium text-gray-400 text-gray-700  mb-1">
+                    YouTube Video URL
+                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      id="youtubeUrl"
+                      value={youtubeUrl}
+                      onChange={(e) => setYoutubeUrl(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className="flex-1 px-3 py-2 border border-gray-300  rounded-md focus:outline-none focus:ring-2 focus:ring-[#58b595]   "
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Paste a YouTube video URL to extract subtitles</p>
+                </div>
+                
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={fetchYoutubeSubtitles}
+                    disabled={fetchingSubtitles || !youtubeUrl.trim()}
+                    className="px-6 py-3 bg-[#58b595] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2 transform hover:rotate-1 hover:scale-105 sketchy-button disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {fetchingSubtitles ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Fetching Subtitles...
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                          <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
+                          <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+                        </svg>
+                        Get Subtitles
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : uploadType === 'text' ? (
+              <div className="bg-[#fbfbf8]   border-2 border-gray-400  p-6 rounded-md hover:border-[#58b595] transition-colors sketchy-text-area">
+                <div className="mb-4">
+                  <label htmlFor="textTitle" className="block text-sm font-medium text-gray-400 text-gray-700  mb-1">
                     Title
                   </label>
                   <input
@@ -416,14 +570,14 @@ export default function Dashboard() {
                     id="textTitle"
                     value={textTitle}
                     onChange={(e) => setTextTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#58b595] dark:bg-gray-700 dark:text-white"
+                    className="w-full px-3 py-2 border border-gray-300  rounded-md focus:outline-none focus:ring-2 focus:ring-[#58b595]   "
                     placeholder="Enter document title"
                   />
                 </div>
                 
                 <div className="mb-4 flex flex-col md:flex-row md:items-center gap-4">
                   <div className="flex-1">
-                    <label htmlFor="textContent" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label htmlFor="textContent" className="block text-sm font-medium text-gray-400 text-gray-700  mb-1">
                       Text Content
                     </label>
                     <textarea
@@ -431,26 +585,9 @@ export default function Dashboard() {
                       value={textContent}
                       onChange={(e) => setTextContent(e.target.value)}
                       placeholder="Paste or type your text here..."
-                      className="w-full h-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#58b595] dark:bg-gray-700 dark:text-white"
+                      className="w-full h-40 px-3 py-2 border border-gray-300  rounded-md focus:outline-none focus:ring-2 focus:ring-[#58b595]   "
                     ></textarea>
                   </div>
-                  
-                  {/* <div className="md:self-center text-center px-4 py-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-md">
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Or upload a .txt file</div>
-                    <label className="cursor-pointer">
-                      <input type="file" className="hidden" accept=".txt,text/plain" onChange={handleTxtFileUpload} />
-                      <div className="px-4 py-2 bg-[#58b595] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2 transform hover:rotate-1 hover:scale-105 sketchy-button mx-auto">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                          <polyline points="14 2 14 8 20 8"></polyline>
-                          <line x1="16" y1="13" x2="8" y2="13"></line>
-                          <line x1="16" y1="17" x2="8" y2="17"></line>
-                          <line x1="10" y1="9" x2="8" y2="9"></line>
-                        </svg>
-                        Upload .txt
-                      </div>
-                    </label>
-                  </div> */}
                 </div>
                 
                 <div className="mt-4 flex justify-end">
@@ -470,7 +607,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div 
-                className="border-dashed border-2 border-gray-400 dark:border-gray-600 p-8 text-center hover:border-[#58b595] transition-colors bg-[#fbfbf8] dark:bg-gray-800 sketchy-upload-area"
+                className="border-dashed border-2 border-gray-400  p-8 text-center hover:border-[#58b595] transition-colors bg-[#fbfbf8]   sketchy-upload-area"
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleDrop}
               >
@@ -493,32 +630,32 @@ export default function Dashboard() {
                     </div>
                   </label>
                 </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">PDF: max 20MB, TXT: max 5MB</p>
+                <p className="text-xs text-gray-400  mt-2">PDF: max 20MB, TXT: max 5MB</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 border-2 border-[#58b595] sketchy-box relative">
+        <div className="bg-white   p-6 border-2 border-[#58b595] sketchy-box relative">
           <div className="absolute -top-3 -left-2 bg-[#58b595] text-white px-4 py-1 skewed-tab transform -rotate-2">
             <h2 className="text-xl font-bold">Your Documents</h2>
           </div>
 
           {error && (
-            <div className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-1 mt-4 sketchy-error">
+            <div className="text-xs text-red-500 bg-red-50  px-3 py-1 mt-4 sketchy-error">
               <span>⚠️ {error}</span>
             </div>
           )}
 
           <div className="mt-4 pt-2">
             {documents.length === 0 || documents[0]?.isStorageNotice ? (
-              <div className="text-center py-10 border-dashed border-2 border-gray-300 dark:border-gray-700 sketchy-empty-state">
-                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-3 sketchy-icon">
+              <div className="text-center py-10 border-dashed border-2 border-gray-300  sketchy-empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-12 w-12 text-gray-400  mb-3 sketchy-icon">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                   <path d="M10 10.3c.2-.4.5-.8.9-1a2.1 2.1 0 0 1 2.6.4c.3.4.5.8.5 1.3 0 1.3-2 2-2 2" />
                   <path d="M12 17h.01" />
                 </svg>
-                <p className="text-gray-500 dark:text-gray-400 ">📚 You haven't uploaded any documents yet</p>
+                <p className="text-gray-500  ">📚 You haven't uploaded any documents yet</p>
                 <div className="mt-3 flex justify-center">
                   <svg className="hand-drawn-circle" width="100" height="40" viewBox="0 0 100 40" fill="none">
                     <ellipse cx="50" cy="20" rx="45" ry="15" stroke="#58b595" strokeWidth="1" strokeDasharray="5 3" />
@@ -530,7 +667,7 @@ export default function Dashboard() {
                 {documents.map((doc) => (
                   <div
                     key={doc.id}
-                    className={`relative bg-[#fbfbf8] dark:bg-gray-800 cursor-pointer transform hover:rotate-1 hover:scale-101 transition-transform sketchy-document-card ${doc.status === 'uploading' ? 'bg-gray-50 dark:bg-gray-800/50' : ''}`}
+                    className={`relative bg-[#fbfbf8]   cursor-pointer transform hover:rotate-1 hover:scale-101 transition-transform sketchy-document-card ${doc.status === 'uploading' ? 'bg-gray-50  /50' : ''}`}
                     onClick={() => handleDocumentClick(doc.id)}
                   >
 
@@ -539,7 +676,7 @@ export default function Dashboard() {
                         <div className="flex items-start space-x-2">
                           <div className="flex-1 overflow-hidden">
                             <div className="flex items-center">
-                              <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate  text-lg">{doc.fileName}</h3>
+                              <h3 className="font-medium text-gray-900  truncate  text-lg">{doc.fileName}</h3>
                               {doc.status === 'uploading' && (
                                 <span className="ml-2 px-3 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-200 sketchy-status">
                                   ⏳ Processing
@@ -551,7 +688,7 @@ export default function Dashboard() {
                                 <circle cx="12" cy="12" r="10" />
                                 <polyline points="12 6 12 12 16 14" />
                               </svg>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 ">
+                              <p className="text-sm text-gray-500  ">
                                 {doc.createdAt && doc.createdAt.seconds ? formatDate(new Date(doc.createdAt.seconds * 1000)) : ""}
                               </p>
                             </div>
@@ -564,7 +701,7 @@ export default function Dashboard() {
                       <button
                         onClick={(e) => handleDeleteDocument(doc.id, doc.storagePath, e)}
                         className={`absolute bottom-2 right-2 p-2 rounded-full sketchy-delete-btn
-                          ${deleteConfirm === doc.id ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}
+                          ${deleteConfirm === doc.id ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-gray-100 text-gray-500   '}`}
                         disabled={deleting && deleteConfirm === doc.id}
                       >
                         {deleteConfirm === doc.id ? (

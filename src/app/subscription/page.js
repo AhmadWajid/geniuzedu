@@ -245,16 +245,16 @@ export default function SubscriptionPage() {
   const currentPlan = subscription ? pricingPlans.find(plan => plan.id === subscription.plan) : null;
 
   return (
-    <div className="min-h-screen bg-[#f8f7f2] dark:bg-gray-900">
+    <div className="min-h-screen bg-[#f8f7f2] ">
       <main className="container mx-auto px-6 py-10">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="mb-10">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 relative inline-block">
+            <h1 className="text-3xl font-bold text-gray-900  mb-2 relative inline-block">
               Manage Your Subscription
               <div className="absolute -bottom-1 left-0 w-full h-1 bg-[#58b595] transform -rotate-1"></div>
             </h1>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-gray-600 ">
               View and manage your current subscription, billing details, and payment history.
             </p>
           </div>
@@ -262,49 +262,49 @@ export default function SubscriptionPage() {
           {subscription ? (
             <>
               {/* Current Subscription Card */}
-              <div className="bg-white dark:bg-gray-800 border-2 border-[#58b595] rounded-lg p-6 mb-8 sketchy-box">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Current Subscription</h2>
+              <div className="bg-white   border-2 border-[#58b595] rounded-lg p-6 mb-8 sketchy-box">
+                <h2 className="text-xl font-bold text-gray-900  mb-4">Current Subscription</h2>
                 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <div className="mb-4">
-                      <span className="text-sm text-gray-500 dark:text-gray-400 block">Plan</span>
-                      <span className="text-lg font-medium text-gray-900 dark:text-white">{subscription.name}</span>
+                      <span className="text-sm text-gray-500  block">Plan</span>
+                      <span className="text-lg font-medium text-gray-900 ">{subscription.name}</span>
                     </div>
                     
                     <div className="mb-4">
-                      <span className="text-sm text-gray-500 dark:text-gray-400 block">Status</span>
+                      <span className="text-sm text-gray-500  block">Status</span>
                       <div className="flex items-center">
                         <span className={`h-2.5 w-2.5 rounded-full ${
                           subscription.status === 'active' ? 'bg-green-500' :
                           subscription.status === 'canceled' ? 'bg-red-500' : 'bg-yellow-500'
                         } mr-2`}></span>
-                        <span className="text-gray-900 dark:text-white capitalize">{subscription.status}</span>
+                        <span className="text-gray-900  capitalize">{subscription.status}</span>
                       </div>
                     </div>
                     
                     <div className="mb-4">
-                      <span className="text-sm text-gray-500 dark:text-gray-400 block">Billing Cycle</span>
-                      <span className="text-gray-900 dark:text-white capitalize">{subscription.billing}</span>
+                      <span className="text-sm text-gray-500  block">Billing Cycle</span>
+                      <span className="text-gray-900  capitalize">{subscription.billing}</span>
                     </div>
                   </div>
                   
                   <div>
                     <div className="mb-4">
-                      <span className="text-sm text-gray-500 dark:text-gray-400 block">Price</span>
-                      <span className="text-lg font-medium text-gray-900 dark:text-white">
+                      <span className="text-sm text-gray-500  block">Price</span>
+                      <span className="text-lg font-medium text-gray-900 ">
                         ${subscription.price.toFixed(2)} / {subscription.billing === 'monthly' ? 'month' : 'year'}
                       </span>
                     </div>
                     
                     <div className="mb-4">
-                      <span className="text-sm text-gray-500 dark:text-gray-400 block">Start Date</span>
-                      <span className="text-gray-900 dark:text-white">{formatDate(subscription.startDate)}</span>
+                      <span className="text-sm text-gray-500  block">Start Date</span>
+                      <span className="text-gray-900 ">{formatDate(subscription.startDate)}</span>
                     </div>
                     
                     <div className="mb-4">
-                      <span className="text-sm text-gray-500 dark:text-gray-400 block">Next Billing Date</span>
-                      <span className="text-gray-900 dark:text-white">{formatDate(subscription.nextBillingDate)}</span>
+                      <span className="text-sm text-gray-500  block">Next Billing Date</span>
+                      <span className="text-gray-900 ">{formatDate(subscription.nextBillingDate)}</span>
                     </div>
                   </div>
                 </div>
@@ -328,8 +328,8 @@ export default function SubscriptionPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-lg">
-                    <p className="text-red-600 dark:text-red-400">
+                  <div className="mt-6 p-4 bg-red-50  border border-red-100  rounded-lg">
+                    <p className="text-red-600 ">
                       Your subscription has been canceled and will end on {formatDate(subscription.endDate)}.
                     </p>
                     
@@ -344,31 +344,31 @@ export default function SubscriptionPage() {
               </div>
 
               {/* Billing History */}
-              <div className="bg-white dark:bg-gray-800 border-2 border-[#58b595] rounded-lg p-6 mb-8 sketchy-box">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Billing History</h2>
+              <div className="bg-white   border-2 border-[#58b595] rounded-lg p-6 mb-8 sketchy-box">
+                <h2 className="text-xl font-bold text-gray-900  mb-4">Billing History</h2>
                 
                 {billingHistory.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                      <thead className="bg-gray-50 dark:bg-gray-800">
+                    <table className="min-w-full divide-y divide-gray-200 ">
+                      <thead className="bg-gray-50  ">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  uppercase tracking-wider">Date</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  uppercase tracking-wider">Description</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  uppercase tracking-wider">Amount</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  uppercase tracking-wider">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                      <tbody className="bg-white  divide-y divide-gray-200 ">
                         {billingHistory.map((item) => (
                           <tr key={item.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{formatDate(item.date)}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{item.description}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">${item.amount.toFixed(2)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 ">{formatDate(item.date)}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 ">{item.description}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 ">${item.amount.toFixed(2)}</td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                item.status === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
-                                item.status === 'failed' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : 
-                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
+                                item.status === 'paid' ? 'bg-green-100 text-green-800   :
+                                item.status === 'failed' ? 'bg-red-100 text-red-800   : 
+                                'bg-yellow-100 text-yellow-800  
                               }`}>
                                 {item.status}
                               </span>
@@ -379,22 +379,22 @@ export default function SubscriptionPage() {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-gray-500 dark:text-gray-400">No billing history available.</p>
+                  <p className="text-gray-500 ">No billing history available.</p>
                 )}
               </div>
 
               {/* Change Plan */}
               {subscription.status !== 'canceled' && (
-                <div className="bg-white dark:bg-gray-800 border-2 border-[#58b595] rounded-lg p-6 mb-8 sketchy-box">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Change Plan</h2>
+                <div className="bg-white   border-2 border-[#58b595] rounded-lg p-6 mb-8 sketchy-box">
+                  <h2 className="text-xl font-bold text-gray-900  mb-4">Change Plan</h2>
                   
                   <div className="mb-6 flex items-center justify-center space-x-3">
-                    <span className={`text-sm ${!isYearly ? "font-bold text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
+                    <span className={`text-sm ${!isYearly ? "font-bold text-gray-900 " : "text-gray-500 "}`}>
                       Monthly
                     </span>
                     <button 
                       onClick={() => setIsYearly(!isYearly)}
-                      className="relative inline-flex h-6 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#58b595] focus:ring-offset-2 dark:bg-gray-700"
+                      className="relative inline-flex h-6 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#58b595] focus:ring-offset-2  "
                       role="switch"
                       aria-checked={isYearly}
                     >
@@ -403,7 +403,7 @@ export default function SubscriptionPage() {
                         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isYearly ? "translate-x-6" : "translate-x-0"}`}
                       />
                     </button>
-                    <span className={`text-sm ${isYearly ? "font-bold text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
+                    <span className={`text-sm ${isYearly ? "font-bold text-gray-900 " : "text-gray-500 "}`}>
                       Yearly <span className="text-xs text-[#e68a30] ml-1">Save 15-20%</span>
                     </span>
                   </div>
@@ -414,14 +414,14 @@ export default function SubscriptionPage() {
                         key={plan.id}
                         className={`p-4 border-2 rounded-lg ${
                           plan.id === subscription.plan 
-                            ? 'border-[#e68a30] bg-[#e68a30]/10 dark:bg-[#e68a30]/20' 
-                            : 'border-gray-200 dark:border-gray-700'
+                            ? 'border-[#e68a30] bg-[#e68a30]/10 ' 
+                            : 'border-gray-200 '
                         }`}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <h3 className="font-bold text-gray-900 dark:text-white">{plan.name}</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">${isYearly ? plan.yearlyPrice : plan.monthlyPrice} / {isYearly ? 'year' : 'month'}</p>
+                            <h3 className="font-bold text-gray-900 ">{plan.name}</h3>
+                            <p className="text-xs text-gray-500 ">${isYearly ? plan.yearlyPrice : plan.monthlyPrice} / {isYearly ? 'year' : 'month'}</p>
                           </div>
                           
                           {plan.id === subscription.plan && (
@@ -434,7 +434,7 @@ export default function SubscriptionPage() {
                           disabled={processing || plan.id === subscription.plan}
                           className={`w-full mt-2 px-3 py-1.5 text-sm rounded ${
                             plan.id === subscription.plan
-                              ? 'bg-gray-200 text-gray-500 dark:bg-gray-700 cursor-not-allowed'
+                              ? 'bg-gray-200 text-gray-500   cursor-not-allowed'
                               : 'bg-[#58b595] text-white hover:bg-[#48a585]'
                           }`}
                         >
@@ -447,12 +447,12 @@ export default function SubscriptionPage() {
               )}
             </>
           ) : (
-            <div className="text-center py-12 bg-white dark:bg-gray-800 border-2 border-[#58b595] rounded-lg sketchy-box">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="text-center py-12 bg-white   border-2 border-[#58b595] rounded-lg sketchy-box">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400  mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Active Subscription</h2>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">You don't have an active subscription. Subscribe to one of our plans to access premium features.</p>
+              <h2 className="text-xl font-bold text-gray-900  mb-2">No Active Subscription</h2>
+              <p className="text-gray-600  mb-6">You don't have an active subscription. Subscribe to one of our plans to access premium features.</p>
               <button 
                 onClick={() => router.push('/pricing')}
                 className="px-6 py-3 bg-[#58b595] text-white hover:bg-[#48a585] rounded sketchy-button transform hover:rotate-1"
@@ -467,21 +467,21 @@ export default function SubscriptionPage() {
       {/* Cancel Subscription Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full sketchy-box border-2 border-[#58b595]">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Cancel Your Subscription</h3>
+          <div className="bg-white   rounded-lg p-6 max-w-md w-full sketchy-box border-2 border-[#58b595]">
+            <h3 className="text-xl font-bold text-gray-900  mb-4">Cancel Your Subscription</h3>
             
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
+            <p className="text-gray-600  mb-4">
               We're sorry to see you go. Your subscription will remain active until the end of your current billing period.
             </p>
             
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-400 text-gray-700  mb-1">
                 Please tell us why you're canceling (optional):
               </label>
               <textarea
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-[#58b595] focus:border-[#58b595] bg-white dark:bg-gray-900"
+                className="w-full px-3 py-2 border border-gray-300  rounded-md focus:outline-none focus:ring-[#58b595] focus:border-[#58b595] bg-white "
                 rows="3"
               ></textarea>
             </div>
@@ -489,7 +489,7 @@ export default function SubscriptionPage() {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowCancelModal(false)}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                className="px-4 py-2 bg-gray-200   text-gray-800  rounded hover:bg-gray-300 "
                 disabled={processing}
               >
                 Keep Subscription
