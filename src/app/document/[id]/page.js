@@ -35,7 +35,8 @@ export default function DocumentPage({ params }) {
   const [generatedContent, setGeneratedContent] = useState({
     chat: true, // Chat is enabled by default
     notes: false,
-    flashcards: false
+    flashcards: false,
+    test: false  // Add test to generatedContent
   });
 
   // Add these new state variables for API interaction
@@ -54,6 +55,18 @@ export default function DocumentPage({ params }) {
   const [flashcardsError, setFlashcardsError] = useState(null);
   const [currentFlashcardIndex, setCurrentFlashcardIndex] = useState(0);
   const [isFlashcardFlipped, setIsFlashcardFlipped] = useState(false);
+
+  // Add these new state variables for tests
+  const [testQuestions, setTestQuestions] = useState([]);
+  const [testError, setTestError] = useState(null);
+
+  // Add state for panel expansion
+  const [isPanelExpanded, setIsPanelExpanded] = useState(false);
+
+  // Function to handle panel expansion toggle
+  const handlePanelExpansion = (expanded) => {
+    setIsPanelExpanded(expanded);
+  };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -85,21 +98,22 @@ export default function DocumentPage({ params }) {
       if (docSnap.exists()) {
         const documentData = docSnap.data();
         console.log("Document data loaded:", documentData);
-        console.log("PDF URL:", documentData.fileUrl);
         setDocument(documentData);
-        
-        // Check if there are saved notes and set the state accordingly
-        if (documentData.notes) {
-          setNotesContent(documentData.notes);
-          setGeneratedContent(prev => ({...prev, notes: true}));
-        }
+        setNotesContent(documentData.notes);
+        setGeneratedContent(prev => ({...prev, notes: true}));
         
         // Check if there are saved flashcards and set the state accordingly
         if (documentData.flashcards && documentData.flashcards.length > 0) {
           setFlashcardsContent(documentData.flashcards);
           setGeneratedContent(prev => ({...prev, flashcards: true}));
         }
-        
+
+        // Check if there are saved test questions and set the state accordingly
+        if (documentData.test && documentData.test.length > 0) {
+          setTestQuestions(documentData.test);
+          setGeneratedContent(prev => ({...prev, test: true}));
+        }
+
         // Check if text content has already been extracted
         if (documentData.extractedText) {
           console.log("Using previously extracted text content");
@@ -109,12 +123,11 @@ export default function DocumentPage({ params }) {
         console.error("No such document!");
         router.push('/dashboard');
       }
-      
       setLoading(false);
     } catch (error) {
       console.error("Error fetching document: ", error);
       setLoading(false);
-    }
+    } 
   };
 
   // Function to save extracted text to Firestore
@@ -155,13 +168,13 @@ export default function DocumentPage({ params }) {
         console.log("Using existing extracted content");
         return;
       }
-      
+
       // Check if there's already an extraction in progress
       if (isExtracting) {
         console.log("Extraction already in progress");
         return;
       }
-      
+
       setIsExtracting(true);
       setExtractionProgress(0);
       console.log(`Starting to extract text from all ${totalPages} pages...`);
@@ -172,10 +185,10 @@ export default function DocumentPage({ params }) {
         setIsExtracting(false);
         return;
       }
-      
+
       const loadingTask = pdfjs.getDocument(document.fileUrl);
       const pdfDoc = await loadingTask.promise;
-      
+
       let allText = '';
       
       // Process each page
@@ -193,7 +206,7 @@ export default function DocumentPage({ params }) {
           
           // Add the new page text
           allText += ' ' + text;
-          
+
           // If text layer is insufficient, try OCR
           if (text.trim().length < 50) {
             console.log(`Page ${i} has little text, attempting OCR...`);
@@ -204,7 +217,6 @@ export default function DocumentPage({ params }) {
             const context = canvas.getContext('2d');
             canvas.width = viewport.width;
             canvas.height = viewport.height;
-            
             await page.render({
               canvasContext: context,
               viewport: viewport
@@ -212,7 +224,6 @@ export default function DocumentPage({ params }) {
             
             // Small delay to ensure rendering is complete
             await new Promise(resolve => setTimeout(resolve, 100));
-            
             const imageData = canvas.toDataURL('image/png');
             
             // Use Tesseract.js for OCR
@@ -220,7 +231,7 @@ export default function DocumentPage({ params }) {
             const result = await worker.recognize(imageData);
             const ocrText = result.data.text;
             await worker.terminate();
-            
+
             if (ocrText && ocrText.length > 0) {
               allText += ' ' + ocrText;
             }
@@ -229,13 +240,12 @@ export default function DocumentPage({ params }) {
           console.error(`Error extracting text from page ${i}:`, pageError);
         }
       }
-      
+
       console.log("Finished extracting text from all pages");
       setPdfTextContent(allText);
-      
+
       // Save the extracted text to Firestore
       await saveExtractedTextToFirestore(allText);
-      
       setIsExtracting(false);
       setExtractionProgress(100);
     } catch (error) {
@@ -251,9 +261,7 @@ export default function DocumentPage({ params }) {
       // Convert the text content items to a string
       const textItems = textContent.items.map(item => item.str);
       const text = textItems.join(' ');
-      
       console.log("Extracted PDF text content from current page:", text.substring(0, 200) + "...");
-      
       return text;
     } catch (error) {
       console.error("Error extracting text content:", error);
@@ -290,7 +298,7 @@ export default function DocumentPage({ params }) {
       console.error("Error saving notes to Firestore:", error);
     }
   };
-  
+
   // Add function to save flashcards to Firestore
   const saveFlashcardsToFirestore = async (flashcards) => {
     try {
@@ -309,7 +317,26 @@ export default function DocumentPage({ params }) {
       console.error("Error saving flashcards to Firestore:", error);
     }
   };
-  
+
+  // Add function to save test questions to Firestore
+  const saveTestToFirestore = async (questions) => {
+    try {
+      if (!user || !document) return;
+
+      const uidFromParams = searchParams.get('uid');
+      const userId = uidFromParams || user.uid;
+
+      const docRef = doc(db, `users/${userId}/documents`, documentId);
+      await updateDoc(docRef, {
+        test: questions
+      });
+
+      console.log("Test saved to Firestore");
+    } catch (error) {
+      console.error("Error saving test to Firestore:", error);
+    }
+  };
+
   // Add function to delete notes from Firestore
   const deleteNotesFromFirestore = async () => {
     try {
@@ -317,12 +344,12 @@ export default function DocumentPage({ params }) {
       if (!confirm('Are you sure you want to delete these notes?')) {
         return;
       }
-      
+
       if (!user || !document) return;
       
       const uidFromParams = searchParams.get('uid');
       const userId = uidFromParams || user.uid;
-      
+        
       const docRef = doc(db, `users/${userId}/documents`, documentId);
       await updateDoc(docRef, {
         notes: null
@@ -330,8 +357,6 @@ export default function DocumentPage({ params }) {
       
       // Reset notes content
       setNotesContent('');
-      
-      // Update UI state to show generate interface
       setGeneratedContent(prev => ({
         ...prev,
         notes: false
@@ -342,7 +367,7 @@ export default function DocumentPage({ params }) {
       console.error("Error deleting notes from Firestore:", error);
     }
   };
-  
+
   // Add function to delete flashcards from Firestore
   const deleteFlashcardsFromFirestore = async () => {
     try {
@@ -350,12 +375,12 @@ export default function DocumentPage({ params }) {
       if (!confirm('Are you sure you want to delete these flashcards?')) {
         return;
       }
-      
+
       if (!user || !document) return;
       
       const uidFromParams = searchParams.get('uid');
       const userId = uidFromParams || user.uid;
-      
+        
       const docRef = doc(db, `users/${userId}/documents`, documentId);
       await updateDoc(docRef, {
         flashcards: null
@@ -363,8 +388,6 @@ export default function DocumentPage({ params }) {
       
       // Reset flashcards content
       setFlashcardsContent([]);
-      
-      // Update UI state to show generate interface
       setGeneratedContent(prev => ({
         ...prev,
         flashcards: false
@@ -373,6 +396,39 @@ export default function DocumentPage({ params }) {
       console.log("Flashcards deleted from Firestore");
     } catch (error) {
       console.error("Error deleting flashcards from Firestore:", error);
+    }
+  };
+
+  // Add function to delete test from Firestore
+  const deleteTestFromFirestore = async () => {
+    try {
+      // Ask for confirmation before deleting
+      if (!confirm('Are you sure you want to delete this test?')) {
+        return;
+      }
+
+      if (!user || !document) return;
+
+      const uidFromParams = searchParams.get('uid');
+      const userId = uidFromParams || user.uid;
+
+      const docRef = doc(db, `users/${userId}/documents`, documentId);
+      await updateDoc(docRef, {
+        test: null
+      });
+
+      // Reset test content
+      setTestQuestions([]);
+
+      // Update UI state to show generate interface
+      setGeneratedContent(prev => ({
+        ...prev,
+        test: false
+      }));
+
+      console.log("Test deleted from Firestore");
+    } catch (error) {
+      console.error("Error deleting test from Firestore:", error);
     }
   };
 
@@ -473,50 +529,6 @@ export default function DocumentPage({ params }) {
         if (!response.ok) {
           const errorText = await response.text();
           console.error('Error response:', errorText);
-          
-          // Try to extract flashcards from error response if possible
-          let extractedFlashcards = [];
-          try {
-            // Try to parse the error response as JSON
-            const errorJson = JSON.parse(errorText);
-            
-            // Check if there's a rawResponse property
-            if (errorJson.rawResponse) {
-              // Try to extract JSON from the rawResponse
-              const match = errorJson.rawResponse.match(/```json\s*([\s\S]*?)\s*```/);
-              if (match && match[1]) {
-                const parsedData = JSON.parse(match[1]);
-                
-                // Check for flashcards array
-                if (parsedData.flashcards && Array.isArray(parsedData.flashcards)) {
-                  extractedFlashcards = parsedData.flashcards;
-                  console.log('Successfully extracted flashcards from error response');
-                }
-                
-                // Check for flashcards_part_2 array and merge if needed
-                if (parsedData.flashcards_part_2 && Array.isArray(parsedData.flashcards_part_2)) {
-                  extractedFlashcards = [...extractedFlashcards, ...parsedData.flashcards_part_2];
-                  console.log('Successfully merged flashcards_part_2');
-                }
-              }
-            }
-          } catch (parseError) {
-            console.error('Failed to extract flashcards from error response:', parseError);
-          }
-          
-          // If we successfully extracted flashcards, use them instead of throwing an error
-          if (extractedFlashcards.length > 0) {
-            console.log(`Successfully extracted ${extractedFlashcards.length} flashcards`);
-            setFlashcardsContent(extractedFlashcards);
-            await saveFlashcardsToFirestore(extractedFlashcards);
-            setCurrentFlashcardIndex(0);
-            setIsFlashcardFlipped(false);
-            setGeneratedContent(prev => ({...prev, flashcards: true}));
-            setIsGenerating(false);
-            return;
-          }
-          
-          // If we couldn't extract flashcards, throw the original error
           throw new Error(`Failed to generate flashcards: ${response.status}`);
         }
         
@@ -544,6 +556,69 @@ export default function DocumentPage({ params }) {
       } catch (error) {
         console.error('Error generating flashcards:', error);
         setFlashcardsError(error.message || 'Failed to generate flashcards');
+      } finally {
+        setIsGenerating(false);
+      }
+    } else if (contentType === 'test') {
+      try {
+        setIsGenerating(true);
+        setTestError(null);
+        
+        console.log('Starting test generation');
+        
+        // Check if text extraction is complete
+        if (isExtracting) {
+          alert("Text extraction is still in progress. Please wait until it completes.");
+          setIsGenerating(false);
+          return;
+        }
+        
+        // Use the extracted PDF text content if available
+        const docText = pdfTextContent || document?.extractedText || 
+                        "This is a sample document for testing test generation. " +
+                        "Please upload a real document with text content for proper tests.";
+        
+        // Make the API call to generate test questions
+        const response = await fetch('/api/generate-notes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            documentText: docText,
+            customInstructions: customInstructions,
+            type: 'test'  // Specify test type
+          }),
+        });
+        
+        console.log('API response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          throw new Error(`Failed to generate test: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Test generated successfully:', data);
+        
+        if (data.questions && Array.isArray(data.questions)) {
+          setTestQuestions(data.questions);
+          
+          // Save test to Firestore
+          await saveTestToFirestore(data.questions);
+        } else {
+          throw new Error('Invalid test data format');
+        }
+        
+        // Update UI state to show generated content
+        setGeneratedContent(prev => ({
+          ...prev,
+          [contentType]: true
+        }));
+      } catch (error) {
+        console.error('Error generating test:', error);
+        setTestError(error.message || 'Failed to generate test');
       } finally {
         setIsGenerating(false);
       }
@@ -575,27 +650,19 @@ export default function DocumentPage({ params }) {
   const handlePageSubmit = (e) => {
     e.preventDefault();
     const page = parseInt(pageInputValue, 10);
-    if (isNaN(page)) return;
-    
     // Make sure the page is within valid range
     if (page >= 1 && page <= numPages) {
       setPageNumber(page);
-      setPageInputValue(''); // Reset input after submission
     }
   };
 
-  // Updated page navigation functions
-  const goToPrevPage = () => setPageNumber(prevPageNumber => 
-    prevPageNumber > 1 ? prevPageNumber - 1 : prevPageNumber
-  );
-  
-  const goToNextPage = () => setPageNumber(prevPageNumber => 
-    prevPageNumber < numPages ? prevPageNumber + 1 : prevPageNumber
-  );
+  // Page navigation functions
+  const goToPrevPage = () => setPageNumber(prevPageNumber => Math.max(prevPageNumber - 1, 1));
+  const goToNextPage = () => setPageNumber(prevPageNumber => Math.min(prevPageNumber + 1, numPages));
 
-  // Function to download the PDF
+  // Download PDF function
   const downloadPdf = () => {
-    if (document?.fileUrl) {
+    if (document.fileUrl) {
       const link = window.document.createElement('a');
       link.href = document.fileUrl;
       link.download = document.fileName || 'document.pdf';
@@ -619,7 +686,7 @@ export default function DocumentPage({ params }) {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
         <div className="flex flex-col justify-center items-center min-h-[calc(100vh-64px)]">
           <h2 className="text-xl font-semibold mb-2">Document not found</h2>
-          <button 
+          <button
             onClick={() => router.push('/dashboard')}
             className="px-4 py-2 bg-[#ef9441] text-white rounded-lg"
           >
@@ -636,173 +703,154 @@ export default function DocumentPage({ params }) {
         <div className="mb-4 md:mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{document.fileName}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Uploaded on {document.createdAt?.toDate ? new Date(document.createdAt.toDate()).toLocaleDateString() : 'Unknown date'}
+            {document.createdAt?.toDate ? new Date(document.createdAt.toDate()).toLocaleDateString() : 'Unknown date'}
           </p>
         </div>
 
-        {/* Show extraction progress when extracting text */}
-        {isExtracting && (
-          <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-lg">
-            <div className="flex items-center">
-              <div className="mr-2 animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500"></div>
-              <span>Extracting document text: {extractionProgress}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-              <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${extractionProgress}%` }}></div>
-            </div>
-          </div>
-        )}
-        
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
-          {/* Document Viewer Panel - Left Side */}
-          <div className="w-full lg:w-1/2 ">
-            <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-gray-900/50 rounded-lg mx-auto">
-              {document.fileUrl ? (
-                pdfLoading ? (
-                  <div className="flex flex-col justify-center items-center h-[500px] md:h-[700px] w-full">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ef9441]-500 mb-4"></div>
-                    <p className="text-gray-500">Loading PDF viewer...</p>
+          {/* Document Viewer Panel - Left Side - Hidden when panel is expanded */}
+          {!isPanelExpanded && (
+            <div className="w-full lg:w-1/2 ">
+              <div className="bg-white dark:bg-gray-900 shadow-lg dark:shadow-gray-900/50 rounded-lg mx-auto">
+                {document.isTextDocument ? (
+                  <div className="w-full h-[500px] md:h-[700px] border-0 overflow-auto bg-white dark:bg-gray-900 p-6">
+                    <div className="mb-4 border-b pb-2">
+                      <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
+                        {document.fileName}
+                      </h2>
+                    </div>
+                    <div className="prose dark:prose-invert max-w-none">
+                      {document.textContent?.split('\n').map((line, index) => (
+                        <p key={index} className="my-2">
+                          {line || <br />}
+                        </p>
+                      ))}
+                    </div>
                   </div>
-                ) : null
-              ) : (
-                <div className="h-[500px] md:h-[700px] w-full flex items-center justify-center">
-                  <p className="text-red-500">PDF URL not available</p>
-                </div>
-              )}
-              
-              {document.fileUrl && (
-                <>
-                  {/* Enhanced responsive controls */}
-                  <div className="flex flex-wrap items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                    {/* Page navigation controls with new page input */}
-                    <div className="flex items-center space-x-2 my-1">
-                      <button 
-                        onClick={goToPrevPage}
-                        disabled={pageNumber <= 1}
-                        className={`p-2 rounded-md ${pageNumber <= 1 ? 'text-gray-400' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-                        aria-label="Previous page"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                        </svg>
-                      </button>
+                ) : (
+                  <>
+                    {/* Enhanced responsive controls */}
+                    <div className="flex flex-wrap items-center justify-between p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                      {/* Page navigation controls with new page input */}
+                      <div className="flex items-center space-x-2 my-1">
+                        <button 
+                          onClick={goToPrevPage}
+                          disabled={pageNumber <= 1}
+                          className={`p-2 rounded-md ${pageNumber <= 1 ? 'text-gray-400' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                          aria-label="Previous page"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                          </svg>
+                        </button>
+                        
+                        {/* Page display with input form */}
+                        <form onSubmit={handlePageSubmit} className="flex items-center">
+                          <span className="text-sm mr-1">Page</span>
+                          <input
+                            type="text"
+                            value={pageInputValue}
+                            onChange={handlePageInputChange}
+                            placeholder={pageNumber.toString()}
+                            className="w-12 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
+                            aria-label="Go to page"
+                          />
+                          <span className="text-sm mx-1">of {numPages || '?'}</span>
+                        </form>
+                        
+                        <button 
+                          onClick={goToNextPage}
+                          disabled={pageNumber >= numPages}
+                          className={`p-2 rounded-md ${pageNumber >= numPages ? 'text-gray-400' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                          aria-label="Next page"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                          </svg>
+                        </button>
+                      </div>
                       
-                      {/* Page display with input form */}
-                      <form onSubmit={handlePageSubmit} className="flex items-center">
-                        <span className="text-sm mr-1">Page</span>
-                        <input
-                          type="text"
-                          value={pageInputValue}
-                          onChange={handlePageInputChange}
-                          placeholder={pageNumber.toString()}
-                          className="w-12 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700"
-                          aria-label="Go to page"
+                      {/* Zoom controls */}
+                      <div className="flex items-center space-x-2 my-1">
+                        <button 
+                          onClick={zoomOut}
+                          className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
+                          aria-label="Zoom out"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
+                          </svg>
+                        </button>
+                        <span className="text-sm">{Math.round(scale * 100)}%</span>
+                        <button 
+                          onClick={zoomIn}
+                          className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
+                          aria-label="Zoom in"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                        </button>
+                        <button 
+                          onClick={resetZoom}
+                          className="px-3 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
+                        >
+                          Reset
+                        </button>
+                      </div>
+                      
+                      {/* Download button */}
+                      <div className="flex items-center my-1">
+                        <button 
+                          onClick={downloadPdf}
+                          className="flex items-center px-3 py-1 text-xs bg-[#ef9441] text-white rounded-md hover:bg-[#d88537]"
+                          aria-label="Download PDF"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                          </svg>
+                          Download
+                        </button>
+                      </div> 
+                    </div>
+                    
+                    {/* PDF Container with horizontal scroll enabled */}
+                    <div className="w-full h-[500px] md:h-[700px] border-0 overflow-x-auto overflow-y-auto">
+                      <Document
+                        file={document.fileUrl}
+                        onLoadSuccess={onDocumentLoadSuccess}
+                        loading={
+                          <div className="flex justify-center items-center h-full">
+                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ef9441]-500"></div>
+                          </div>
+                        }
+                        error={
+                          <div className="flex justify-center items-center h-full text-red-500">
+                            Failed to load PDF. Please try again.
+                          </div>
+                        }
+                        className={`${pdfLoading ? 'hidden' : 'block'}`}
+                      >
+                        {/* Page component with proper width handling */}
+                        <Page
+                          pageNumber={pageNumber}
+                          onLoadSuccess={onPageLoadSuccess}
+                          className="mx-auto"
+                          renderTextLayer={true}
+                          renderAnnotationLayer={true}
+                          scale={scale}
+                          renderZoomLayer={false}
+                          width={null} // Let the page determine its own width based on scale
                         />
-                        <span className="text-sm mx-1">of {numPages || '?'}</span>
-                      </form>
-                      
-                      <button 
-                        onClick={goToNextPage}
-                        disabled={pageNumber >= numPages}
-                        className={`p-2 rounded-md ${pageNumber >= numPages ? 'text-gray-400' : 'hover:bg-gray-200 dark:hover:bg-gray-700'}`}
-                        aria-label="Next page"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                        </svg>
-                      </button>
+                      </Document>
                     </div>
-                    
-                    {/* Zoom controls */}
-                    <div className="flex items-center space-x-2 my-1">
-                      <button 
-                        onClick={zoomOut}
-                        className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
-                        aria-label="Zoom out"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
-                        </svg>
-                      </button>
-                      
-                      <span className="text-sm">{Math.round(scale * 100)}%</span>
-                      
-                      <button 
-                        onClick={zoomIn}
-                        className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700"
-                        aria-label="Zoom in"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                      </button>
-                      
-                      <button 
-                        onClick={resetZoom}
-                        className="px-3 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600"
-                      >
-                        Reset
-                      </button>
-                    </div>
-                    
-                    {/* Download button */}
-                    <div className="flex items-center my-1">
-                      <button 
-                        onClick={downloadPdf}
-                        className="flex items-center px-3 py-1 text-xs bg-[#ef9441] text-white rounded-md hover:bg-[#d88537]"
-                        aria-label="Download PDF"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                        </svg>
-                        Download
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* PDF Container with horizontal scroll enabled */}
-                  <div className="w-full h-[500px] md:h-[700px] border-0 overflow-x-auto overflow-y-auto">
-                    <Document
-                      file={document.fileUrl}
-                      onLoadSuccess={onDocumentLoadSuccess}
-                      loading={
-                        <div className="flex justify-center items-center h-full">
-                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ef9441]-500"></div>
-                        </div>
-                      }
-                      error={
-                        <div className="flex justify-center items-center h-full text-red-500">
-                          Failed to load PDF. Please try again.
-                        </div>
-                      }
-                      className={`${pdfLoading ? 'hidden' : 'block'}`}
-                    >
-                      {/* Page component with proper width handling */}
-                      <Page
-                        pageNumber={pageNumber}
-                        onLoadSuccess={onPageLoadSuccess}
-                        className="mx-auto"
-                        renderTextLayer={true}
-                        renderAnnotationLayer={true}
-                        scale={scale}
-                        renderZoomLayer={false}
-                        width={null} // Let the page determine its own width based on scale
-                      />
-                    </Document>
-                  </div>
-                </>
-              )}
-            </div>
-            
-            {/* PDF Error Message */}
-            {pdfError && (
-              <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg text-center">
-                {pdfError}
+                  </>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
           
-          {/* Interactive Panel - Right Side */}
+          {/* Interactive Panel - Right Side - Full width when expanded */}
           <InteractivePanel
             document={document}
             documentId={documentId}
@@ -812,6 +860,8 @@ export default function DocumentPage({ params }) {
             notesError={notesError}
             flashcardsContent={flashcardsContent}
             flashcardsError={flashcardsError}
+            testQuestions={testQuestions}
+            testError={testError}
             isGenerating={isGenerating}
             isExtracting={isExtracting}
             extractionProgress={extractionProgress}
@@ -820,10 +870,13 @@ export default function DocumentPage({ params }) {
             onGenerateContent={generateContent}
             onDeleteNotes={deleteNotesFromFirestore}
             onDeleteFlashcards={deleteFlashcardsFromFirestore}
+            onDeleteTest={deleteTestFromFirestore}
             onInstructionsChange={handleInstructionsChange}
             setGeneratedContent={setGeneratedContent}
             setNotesContent={setNotesContent}
             setFlashcardsContent={setFlashcardsContent}
+            isPanelExpanded={isPanelExpanded}
+            onTogglePanel={handlePanelExpansion}
           />
         </div>
       </div>

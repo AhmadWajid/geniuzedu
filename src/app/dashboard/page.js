@@ -3,17 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db, storage } from "../../firebase/config";
-import { signOut as firebaseSignOut } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { collection, addDoc, getDocs, query, where, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
-// Helper function to format file size
-const formatFileSize = (bytes) => {
-  if (!bytes) return "Unknown size";
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
-};
 
 // Helper function to format date
 const formatDate = (date) => {
@@ -34,6 +26,9 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [uploadType, setUploadType] = useState('pdf'); // new state for upload type
+  const [textContent, setTextContent] = useState(''); // new state for text content
+  const [textTitle, setTextTitle] = useState(''); // new state for text title
   const router = useRouter();
 
   const fetchUserDocuments = useCallback(async (userId) => {
@@ -111,16 +106,6 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, [router, fetchUserDocuments]);
 
-  const handleSignOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-      router.push('/');
-    } catch (error) {
-      console.error("Error signing out: ", error);
-      setError(`Sign out failed: ${error.message}`);
-    }
-  };
-
   const uploadFileToFirebase = async (file) => {
     if (!file || !user) return null;
 
@@ -195,22 +180,30 @@ export default function Dashboard() {
 
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
-    if (selectedFile?.type === "application/pdf" && selectedFile.size <= 20 * 1024 * 1024) {
+    if (!selectedFile || !user) return;
+
+    if (selectedFile.type === "application/pdf" && selectedFile.size <= 20 * 1024 * 1024) {
       setFile(selectedFile);
       await uploadFileToFirebase(selectedFile);
+    } else if ((selectedFile.type === "text/plain" || selectedFile.name.endsWith('.txt')) && selectedFile.size <= 5 * 1024 * 1024) {
+      await handleTxtFileUpload({ target: { files: [selectedFile] } });
     } else {
-      alert("Please select a PDF file under 20MB");
+      alert("Please select a PDF file under 20MB or a TXT file under 5MB");
     }
   };
 
   const handleDrop = async (e) => {
     e.preventDefault();
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile?.type === "application/pdf" && droppedFile.size <= 20 * 1024 * 1024) {
+    if (!droppedFile || !user) return;
+
+    if (droppedFile.type === "application/pdf" && droppedFile.size <= 20 * 1024 * 1024) {
       setFile(droppedFile);
       await uploadFileToFirebase(droppedFile);
+    } else if ((droppedFile.type === "text/plain" || droppedFile.name.endsWith('.txt')) && droppedFile.size <= 5 * 1024 * 1024) {
+      await handleTxtFileUpload({ target: { files: [droppedFile] } });
     } else {
-      alert("Please drop a PDF file under 20MB");
+      alert("Please drop a PDF file under 20MB or a TXT file under 5MB");
     }
   };
 
@@ -264,6 +257,97 @@ export default function Dashboard() {
     }
   };
 
+  const handleTxtFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !user) return;
+
+    if (file.type !== "text/plain" && !file.name.endsWith('.txt')) {
+      alert("Please upload a .txt file");
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setError(null);
+
+      // Read the file contents
+      const fileContent = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(new Error("Failed to read file"));
+        reader.readAsText(file);
+      });
+
+      // Create document entry in Firestore with the content from the file
+      const docRef = await addDoc(collection(db, `users/${user.uid}/documents`), {
+        fileName: file.name,
+        userId: user.uid,
+        createdAt: new Date(),
+        fileType: 'text/plain',
+        status: 'complete',
+        lastUpdated: new Date(),
+        uploadedBy: user.email || user.displayName || user.uid,
+        tags: [],
+        isTextDocument: true,
+        textContent: fileContent,
+        extractedText: fileContent
+      });
+
+      await fetchUserDocuments(user.uid);
+      router.push(`/document/${docRef.id}?uid=${user.uid}`);
+    } catch (error) {
+      console.error("Text file upload error:", error);
+      setError(error.message);
+      alert(`Failed to upload text file: ${error.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleTextSubmit = async () => {
+    if (!textContent.trim() || !textTitle.trim() || !user) return;
+    
+    try {
+      setUploading(true);
+      setError(null);
+
+      if (!user.uid) {
+        throw new Error("User ID not available. Please try logging in again.");
+      }
+
+      // Create document entry in Firestore
+      const docRef = await addDoc(collection(db, `users/${user.uid}/documents`), {
+        fileName: textTitle.trim(),
+        userId: user.uid,
+        createdAt: new Date(),
+        fileType: 'text/plain',
+        status: 'complete',
+        lastUpdated: new Date(),
+        uploadedBy: user.email || user.displayName || user.uid,
+        tags: [],
+        isTextDocument: true,
+        textContent: textContent,
+        extractedText: textContent // Store the text directly as extractedText for AI processing
+      });
+
+      await fetchUserDocuments(user.uid);
+      
+      // Clear the form
+      setTextTitle('');
+      setTextContent('');
+      
+      // Navigate to the document page
+      router.push(`/document/${docRef.id}?uid=${user.uid}`);
+      
+    } catch (error) {
+      console.error("Text submission error:", error);
+      setError(error.message);
+      alert(`Failed to save text document: ${error.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = () => {
       setDeleteConfirm(null);
@@ -292,35 +376,126 @@ export default function Dashboard() {
             <h2 className="text-xl font-bold">Upload Document</h2>
           </div>
 
+          {/* Add upload type toggle */}
+          <div className="mt-4 mb-2 flex justify-center">
+            <div className="inline-flex rounded-md shadow-sm p-1 bg-gray-100 dark:bg-gray-800">
+              <button
+                type="button"
+                onClick={() => setUploadType('pdf')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  uploadType === 'pdf' 
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' 
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                Upload PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => setUploadType('text')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  uploadType === 'text' 
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' 
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                Paste Text
+              </button>
+            </div>
+          </div>
 
           <div className="mt-4 pt-2">
-            <div 
-              className="border-dashed border-2 border-gray-400 dark:border-gray-600 p-8 text-center hover:border-[#58b595] transition-colors bg-[#fbfbf8] dark:bg-gray-800 sketchy-upload-area"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-12 w-12 text-[#58b595] sketchy-icon">
-                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
-                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
-                <path d="M12 12v6"></path>
-                <path d="m15 15-3-3-3 3"></path>
-              </svg>
-              <div className="mt-6 flex flex-col items-center">
-                <label className="cursor-pointer">
-                  <input type="file" className="hidden" accept=".pdf" onChange={handleFileChange} />
-                  <div className="px-6 py-3 bg-[#58b595] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2 transform hover:rotate-1 hover:scale-105 sketchy-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="17 8 12 3 7 8"></polyline>
-                      <line x1="12" x2="12" y1="3" y2="15"></line>
-                    </svg>
-                    {uploading ? 'Uploading...' : 'Choose PDF'}
+            {uploadType === 'text' ? (
+              <div className="bg-[#fbfbf8] dark:bg-gray-800 border-2 border-gray-400 dark:border-gray-600 p-6 rounded-md hover:border-[#58b595] transition-colors sketchy-text-area">
+                <div className="mb-4">
+                  <label htmlFor="textTitle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    id="textTitle"
+                    value={textTitle}
+                    onChange={(e) => setTextTitle(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#58b595] dark:bg-gray-700 dark:text-white"
+                    placeholder="Enter document title"
+                  />
+                </div>
+                
+                <div className="mb-4 flex flex-col md:flex-row md:items-center gap-4">
+                  <div className="flex-1">
+                    <label htmlFor="textContent" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Text Content
+                    </label>
+                    <textarea
+                      id="textContent"
+                      value={textContent}
+                      onChange={(e) => setTextContent(e.target.value)}
+                      placeholder="Paste or type your text here..."
+                      className="w-full h-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-[#58b595] dark:bg-gray-700 dark:text-white"
+                    ></textarea>
                   </div>
-                </label>
-               
+                  
+                  {/* <div className="md:self-center text-center px-4 py-4 border border-dashed border-gray-300 dark:border-gray-600 rounded-md">
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Or upload a .txt file</div>
+                    <label className="cursor-pointer">
+                      <input type="file" className="hidden" accept=".txt,text/plain" onChange={handleTxtFileUpload} />
+                      <div className="px-4 py-2 bg-[#58b595] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2 transform hover:rotate-1 hover:scale-105 sketchy-button mx-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                        Upload .txt
+                      </div>
+                    </label>
+                  </div> */}
+                </div>
+                
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={handleTextSubmit}
+                    disabled={uploading || !textContent.trim() || !textTitle.trim()}
+                    className="px-6 py-3 bg-[#58b595] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2 transform hover:rotate-1 hover:scale-105 sketchy-button disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                      <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    {uploading ? 'Saving...' : 'Save Document'}
+                  </button>
+                </div>
               </div>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Maximum file size: 20MB</p>
-            </div>
+            ) : (
+              <div 
+                className="border-dashed border-2 border-gray-400 dark:border-gray-600 p-8 text-center hover:border-[#58b595] transition-colors bg-[#fbfbf8] dark:bg-gray-800 sketchy-upload-area"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-12 w-12 text-[#58b595] sketchy-icon">
+                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                  <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+                  <path d="M12 12v6"></path>
+                  <path d="m15 15-3-3-3 3"></path>
+                </svg>
+                <div className="mt-6 flex flex-col items-center">
+                  <label className="cursor-pointer">
+                    <input type="file" className="hidden" accept=".pdf,.txt,text/plain" onChange={handleFileChange} />
+                    <div className="px-6 py-3 bg-[#58b595] text-white hover:bg-[#e68a30] transition-colors flex items-center gap-2 transform hover:rotate-1 hover:scale-105 sketchy-button">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" x2="12" y1="3" y2="15"></line>
+                      </svg>
+                      {uploading ? 'Uploading...' : 'Choose PDF or TXT'}
+                    </div>
+                  </label>
+                </div>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">PDF: max 20MB, TXT: max 5MB</p>
+              </div>
+            )}
           </div>
         </div>
 

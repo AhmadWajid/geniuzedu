@@ -19,10 +19,10 @@ const Hero = () => {
   }, []);
   
   return (
-    <div className="py-16 max-md:py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="py-16 max-md:py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 dark:bg-gray-900">
       <div className="flex gap-5 max-lg:flex-col items-center justify-center">
         {/* Left Column - Text Content */}
-        <div className="flex flex-col w-[43%] max-lg:w-full max-w-[100vw]">
+        <div className="flex flex-col w-[43%] max-lg:w-full max-w-[90vw]">
           <div className="flex flex-col items-center lg:items-start w-full">
             <h1 className="self-stretch text-center lg:text-left font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-tight">
               <span className="whitespace-nowrap text-black">Learn Faster.</span><br/>
@@ -45,11 +45,11 @@ const Hero = () => {
         </div>
         
         {/* Right Column - Image */}
-        <div className="flex flex-col items-center ml-5 w-[57%] max-lg:ml-0 max-lg:w-full">
-          <div className="relative w-[700px] h-[482px] max-md:w-full max-md:h-[300px] rounded-2xl max-w-full">
-            <div className="relative w-full h-full">
+        <div className="flex flex-col items-center ml-5 w-[55%] max-lg:ml-0 max-lg:w-full">
+          <div className="relative w-[600px] h-[482px] max-md:w-full max-md:h-[300px] rounded-2xl max-w-full">
+            <div className="relative w-full h-full shadow-[0_0_11px_0px_black] rounded-full">
               <Image 
-                src="/assets/logo.png" 
+                src="/assets/hero.png" 
                 alt="Geniuz Edu Learning Interface" 
                 fill
                 className="object-contain rounded-2xl"

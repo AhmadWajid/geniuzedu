@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@react-pdf-viewer/zoom": "^3.12.0",
+    "@stripe/stripe-js": "^7.0.0",
     "canvas": "^3.1.0",
     "firebase": "^11.6.0",
+    "framer-motion": "^12.6.5",
     "katex": "^0.16.9",
     "next": "15.2.4",
     "pdfjs-dist": "^3.11.174",

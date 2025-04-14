@@ -107,7 +107,14 @@ export default function Profile() {
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md mx-auto">
           <h1 className="text-3xl font-bold text-center mb-8">Edit Profile</h1>
-          
+          <div className="text-center mb-4 py-1 bg-white dark:bg-gray-800 border-2 border-[#58b595] rounded-lg ">
+              <button 
+                onClick={() => router.push('/subscription')}
+                className="px-6 py-3 bg-[#58b595] text-white hover:bg-[#48a585] rounded sketchy-button transform hover:rotate-1"
+              >
+                View Subscription
+              </button>
+            </div>
           {error && (
             <div className="mb-4 bg-red-50 p-4 rounded-md">
               <p className="text-sm text-red-700">{error}</p>
@@ -123,6 +130,7 @@ export default function Profile() {
           <div className="bg-white shadow rounded-lg mb-6">
             <div className="p-6">
               <h2 className="text-xl font-semibold mb-4">Update Profile</h2>
+
               <form onSubmit={handleUpdateProfile}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700">Display Name</label>
