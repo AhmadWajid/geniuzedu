@@ -35,14 +35,13 @@ export default function Home() {
       <section className="py-16 px-4 md:px-8 bg-[#f8f7f2] ">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-900 ">
-            What Students Say
+            GENIUZ
           </h2>
-          
           <div className="bg-[#f8f7f2] p-8 rounded-lg shadow-lg border-l-4 border-[#e68a30]">
-            <p className="text-lg italic text-gray-600  mb-6">
-              "GeniuzEdu has completely transformed my study routine. Creating flashcards used to take hours, now it takes seconds."
+            <p className="text-lg italic text-gray-600">
+              "Boost your studying by ten folds."
             </p>
-            <p className="font-semibold text-gray-800 ">— Engineering Student</p>
+            {/* <p className="font-semibold text-gray-800 ">— Engineering Student</p> */}
           </div>
         </div>
       </section>

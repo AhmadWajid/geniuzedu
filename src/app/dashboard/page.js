@@ -31,6 +31,12 @@ export default function Dashboard() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [youtubeTitle, setYoutubeTitle] = useState('');
   const [fetchingSubtitles, setFetchingSubtitles] = useState(false);
+  const [selectedDocuments, setSelectedDocuments] = useState([]);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showCombineModal, setShowCombineModal] = useState(false);
+  const [combinedDocName, setCombinedDocName] = useState('');
+  const [combiningDocs, setCombiningDocs] = useState(false);
+  const [orderedDocuments, setOrderedDocuments] = useState([]); // New state for ordered docs
   const router = useRouter();
 
   const fetchUserDocuments = useCallback(async (userId) => {
@@ -211,7 +217,18 @@ export default function Dashboard() {
 
   const handleDocumentClick = (documentId) => {
     if (documentId === 'empty-state' || documentId === 'error-state') return;
-    router.push(`/document/${documentId}?uid=${user.uid}`);
+
+    if (isSelectionMode) {
+      setSelectedDocuments(prevSelected => {
+        if (prevSelected.includes(documentId)) {
+          return prevSelected.filter(id => id !== documentId);
+        } else {
+          return [...prevSelected, documentId];
+        }
+      });
+    } else {
+      router.push(`/document/${documentId}?uid=${user.uid}`);
+    }
   };
 
   const handleDeleteDocument = async (docId, storagePath, event) => {
@@ -272,7 +289,6 @@ export default function Dashboard() {
       setUploading(true);
       setError(null);
 
-      // Read the file contents
       const fileContent = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target.result);
@@ -280,7 +296,6 @@ export default function Dashboard() {
         reader.readAsText(file);
       });
 
-      // Create document entry in Firestore with the content from the file
       const docRef = await addDoc(collection(db, `users/${user.uid}/documents`), {
         fileName: file.name,
         userId: user.uid,
@@ -308,7 +323,7 @@ export default function Dashboard() {
 
   const handleTextSubmit = async () => {
     if (!textContent.trim() || !textTitle.trim() || !user) return;
-    
+
     try {
       setUploading(true);
       setError(null);
@@ -317,7 +332,6 @@ export default function Dashboard() {
         throw new Error("User ID not available. Please try logging in again.");
       }
 
-      // Create document entry in Firestore
       const docRef = await addDoc(collection(db, `users/${user.uid}/documents`), {
         fileName: textTitle.trim(),
         userId: user.uid,
@@ -329,18 +343,16 @@ export default function Dashboard() {
         tags: [],
         isTextDocument: true,
         textContent: textContent,
-        extractedText: textContent // Store the text directly as extractedText for AI processing
+        extractedText: textContent
       });
 
       await fetchUserDocuments(user.uid);
-      
-      // Clear the form
+
       setTextTitle('');
       setTextContent('');
-      
-      // Navigate to the document page
+
       router.push(`/document/${docRef.id}?uid=${user.uid}`);
-      
+
     } catch (error) {
       console.error("Text submission error:", error);
       setError(error.message);
@@ -352,26 +364,24 @@ export default function Dashboard() {
 
   const fetchYoutubeSubtitles = async () => {
     if (!youtubeUrl.trim()) return;
-    
+
     try {
       setFetchingSubtitles(true);
       setError(null);
-      
-      // Extract video ID from URL
+
       let videoId = '';
       const url = new URL(youtubeUrl);
-      
+
       if (url.hostname === 'youtu.be') {
         videoId = url.pathname.substring(1);
       } else if (url.hostname.includes('youtube.com')) {
         videoId = url.searchParams.get('v');
       }
-      
+
       if (!videoId) {
         throw new Error("Invalid YouTube URL. Please provide a valid YouTube video link.");
       }
-      
-      // Call your backend API to fetch subtitles
+
       const response = await fetch('/api/youtube-subtitles', {
         method: 'POST',
         headers: {
@@ -379,22 +389,20 @@ export default function Dashboard() {
         },
         body: JSON.stringify({ videoId }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to fetch subtitles");
       }
-      
+
       const data = await response.json();
-      
+
       if (!data.transcript || data.transcript.length === 0) {
         throw new Error("No subtitles found for this video. The video might not have subtitles or they are disabled.");
       }
-      
-      // Auto-generate title from video if none provided
+
       const videoTitle = youtubeTitle.trim() || `YouTube Video: ${data.videoTitle || videoId}`;
-      
-      // Create document entry in Firestore with the subtitles content
+
       const docRef = await addDoc(collection(db, `users/${user.uid}/documents`), {
         fileName: videoTitle,
         userId: user.uid,
@@ -404,7 +412,7 @@ export default function Dashboard() {
         lastUpdated: new Date(),
         uploadedBy: user.email || user.displayName || user.uid,
         tags: [],
-        isTextDocument: false, // Changed from true to false since we're using an iframe now
+        isTextDocument: false,
         youtubeVideoId: videoId,
         youtubeVideoUrl: youtubeUrl,
         youtubeEmbedUrl: `https://www.youtube.com/embed/${videoId}`,
@@ -415,14 +423,12 @@ export default function Dashboard() {
       });
 
       await fetchUserDocuments(user.uid);
-      
-      // Clear the form
+
       setYoutubeUrl('');
       setYoutubeTitle('');
-      
-      // Navigate to the document page
+
       router.push(`/document/${docRef.id}?uid=${user.uid}`);
-      
+
     } catch (error) {
       console.error("YouTube subtitle fetch error:", error);
       setError(error.message);
@@ -431,6 +437,122 @@ export default function Dashboard() {
       setFetchingSubtitles(false);
     }
   };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedDocuments([]);
+  };
+
+  const toggleDocumentSelection = (documentId, event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setSelectedDocuments(prevSelected => {
+      if (prevSelected.includes(documentId)) {
+        return prevSelected.filter(id => id !== documentId);
+      } else {
+        return [...prevSelected, documentId];
+      }
+    });
+  };
+
+  const moveDocumentUp = (index) => {
+    if (index === 0) return; // Already at the top
+    const newOrder = [...orderedDocuments];
+    const temp = newOrder[index];
+    newOrder[index] = newOrder[index - 1];
+    newOrder[index - 1] = temp;
+    setOrderedDocuments(newOrder);
+  };
+
+  const moveDocumentDown = (index) => {
+    if (index === orderedDocuments.length - 1) return; // Already at the bottom
+    const newOrder = [...orderedDocuments];
+    const temp = newOrder[index];
+    newOrder[index] = newOrder[index + 1];
+    newOrder[index + 1] = temp;
+    setOrderedDocuments(newOrder);
+  };
+
+  const handleCombineDocuments = async () => {
+    if (selectedDocuments.length < 2 || !combinedDocName.trim() || !user) {
+      return;
+    }
+
+    try {
+      setCombiningDocs(true);
+
+      let allTexts = [];
+      let allFileTypes = new Set();
+      let containsPdfs = false;
+
+      for (const doc of orderedDocuments) {
+        allTexts.push(`## ${doc.fileName}\n\n`);
+
+        if (doc.isTextDocument) {
+          allTexts.push(doc.textContent || doc.extractedText || '');
+        } else if (doc.sourceType === 'youtube') {
+          allTexts.push(doc.textContent || doc.extractedText || '');
+          allFileTypes.add('youtube');
+        } else if (doc.fileType === "application/pdf") {
+          allTexts.push(doc.extractedText || '');
+          containsPdfs = true;
+          allFileTypes.add('pdf');
+        }
+
+        allTexts.push('\n\n---\n\n');
+      }
+
+      const combinedText = allTexts.join('');
+
+      let primaryFileType = 'text/plain';
+      let isTextDocument = true;
+      if (containsPdfs) {
+        primaryFileType = 'application/pdf';
+        isTextDocument = false;
+      }
+
+      const docRef = await addDoc(collection(db, `users/${user.uid}/documents`), {
+        fileName: combinedDocName.trim(),
+        userId: user.uid,
+        createdAt: new Date(),
+        fileType: primaryFileType,
+        status: 'complete',
+        lastUpdated: new Date(),
+        uploadedBy: user.email || user.displayName || user.uid,
+        tags: [],
+        isTextDocument: isTextDocument,
+        isCombinedDocument: true,
+        sourceDocumentIds: selectedDocuments,
+        textContent: combinedText,
+        extractedText: combinedText,
+        combinedFileTypes: Array.from(allFileTypes),
+        documentOrder: orderedDocuments.map(doc => doc.id)
+      });
+
+      await fetchUserDocuments(user.uid);
+
+      setSelectedDocuments([]);
+      setIsSelectionMode(false);
+      setShowCombineModal(false);
+      setCombinedDocName('');
+
+      router.push(`/document/${docRef.id}?uid=${user.uid}`);
+
+    } catch (error) {
+      console.error("Error combining documents:", error);
+      alert(`Failed to combine documents: ${error.message}`);
+    } finally {
+      setCombiningDocs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showCombineModal && selectedDocuments.length >= 2) {
+      const selectedDocs = documents.filter(doc => selectedDocuments.includes(doc.id));
+      setOrderedDocuments(selectedDocs);
+    }
+  }, [showCombineModal, selectedDocuments, documents]);
 
   useEffect(() => {
     const handleClickOutside = () => {
@@ -460,7 +582,6 @@ export default function Dashboard() {
             <h2 className="text-xl font-bold">Upload Document</h2>
           </div>
 
-          {/* Update upload type toggle to include YouTube */}
           <div className="mt-4 mb-2 flex justify-center">
             <div className="inline-flex rounded-md shadow-sm p-1 bg-gray-100  ">
               <button
@@ -647,6 +768,50 @@ export default function Dashboard() {
             </div>
           )}
 
+          {documents.length > 0 && !documents[0]?.isStorageNotice && (
+            <div className="flex justify-between items-center mt-4 mb-2">
+              <button
+                onClick={toggleSelectionMode}
+                className={`px-3 py-1.5 text-sm rounded-md transition-colors flex items-center gap-1 ${
+                  isSelectionMode ? 'bg-gray-600 text-white' : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                {isSelectionMode ? (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10 15.5L5 20.5L3 18.5"/>
+                      <path d="M21 4L12 13L8 9"/>
+                    </svg>
+                    Cancel Selection
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <path d="M9 14l2 2 4-4"/>
+                    </svg>
+                    Select Documents
+                  </>
+                )}
+              </button>
+              
+              {isSelectionMode && selectedDocuments.length >= 2 && (
+                <button
+                  onClick={() => setShowCombineModal(true)}
+                  className="px-3 py-1.5 bg-[#58b595] text-white rounded-md hover:bg-[#e68a30] transition-colors flex items-center gap-1 text-sm"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 8h6"/>
+                    <path d="M19 5v6"/>
+                    <path d="M15 3H9a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                    <path d="M9 13h6"/>
+                  </svg>
+                  Combine Selected ({selectedDocuments.length})
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="mt-4 pt-2">
             {documents.length === 0 || documents[0]?.isStorageNotice ? (
               <div className="text-center py-10 border-dashed border-2 border-gray-300  sketchy-empty-state">
@@ -667,9 +832,24 @@ export default function Dashboard() {
                 {documents.map((doc) => (
                   <div
                     key={doc.id}
-                    className={`relative bg-[#fbfbf8]   cursor-pointer transform hover:rotate-1 hover:scale-101 transition-transform sketchy-document-card ${doc.status === 'uploading' ? 'bg-gray-50  /50' : ''}`}
+                    className={`relative bg-[#fbfbf8]   cursor-pointer transform hover:rotate-1 hover:scale-101 transition-transform sketchy-document-card ${
+                      doc.status === 'uploading' ? 'bg-gray-50  /50' : ''
+                    } ${selectedDocuments.includes(doc.id) ? 'ring-2 ring-[#58b595] ring-offset-2' : ''}`}
                     onClick={() => handleDocumentClick(doc.id)}
                   >
+                    {isSelectionMode && !doc.isStorageNotice && (
+                      <div className="absolute top-2 left-2 z-10">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          selectedDocuments.includes(doc.id) ? 'bg-[#58b595] border-[#58b595]' : 'border-gray-400 bg-white'
+                        }`}>
+                          {selectedDocuments.includes(doc.id) && (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M20 6L9 17l-5-5"/>
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="p-5 pt-6 border-2 border-[#58b595] sketchy-doc-border">
                       <div className="ml-2 border-l-4 border-[#58b595] pl-3 sketchy-doc-content">
@@ -680,6 +860,11 @@ export default function Dashboard() {
                               {doc.status === 'uploading' && (
                                 <span className="ml-2 px-3 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-200 sketchy-status">
                                   ⏳ Processing
+                                </span>
+                              )}
+                              {doc.isCombinedDocument && (
+                                <span className="ml-2 px-3 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-200 sketchy-status">
+                                  Combined
                                 </span>
                               )}
                             </div>
@@ -697,7 +882,7 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {!doc.isStorageNotice && (
+                    {!doc.isStorageNotice && !isSelectionMode && (
                       <button
                         onClick={(e) => handleDeleteDocument(doc.id, doc.storagePath, e)}
                         className={`absolute bottom-2 right-2 p-2 rounded-full sketchy-delete-btn
@@ -730,6 +915,97 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {showCombineModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">Combine Documents</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              You're about to combine {selectedDocuments.length} documents into one. This will create a new document with all content merged together.
+              Use the arrows to arrange documents in the desired order.
+            </p>
+            
+            <div className="mb-4">
+              <label htmlFor="combinedName" className="block text-sm font-medium text-gray-700 mb-1">
+                Name for Combined Document
+              </label>
+              <input
+                type="text"
+                id="combinedName"
+                value={combinedDocName}
+                onChange={(e) => setCombinedDocName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#58b595]"
+                placeholder="Enter a name for the combined document"
+              />
+            </div>
+            
+            <div className="text-sm bg-gray-100 p-3 rounded-md mb-4 max-h-60 overflow-y-auto">
+              <p className="font-medium mb-2">Arrange documents in desired order:</p>
+              <ul className="space-y-2">
+                {orderedDocuments.map((doc, index) => (
+                  <li key={doc.id} className="flex items-center justify-between p-2 bg-white rounded border border-gray-200">
+                    <span className="text-gray-700 flex-1 truncate">{index + 1}. {doc.fileName}</span>
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => moveDocumentUp(index)}
+                        disabled={index === 0}
+                        className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-30"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m18 15-6-6-6 6"/>
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => moveDocumentDown(index)}
+                        disabled={index === orderedDocuments.length - 1}
+                        className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-30"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowCombineModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCombineDocuments}
+                disabled={!combinedDocName.trim() || combiningDocs}
+                className="px-4 py-2 bg-[#58b595] text-white rounded-md hover:bg-[#e68a30] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {combiningDocs ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Combining...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 8h6"/>
+                      <path d="M19 5v6"/>
+                      <path d="M15 3H9a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                      <path d="M9 13h6"/>
+                    </svg>
+                    Combine Documents
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Kalam:wght@300;400;700&display=swap');

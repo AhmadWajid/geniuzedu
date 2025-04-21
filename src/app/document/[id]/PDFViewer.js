@@ -41,7 +41,7 @@ export default function PDFViewer({ document, setPdfTextContent }) {
 
   return (
     <div className="w-full lg:w-1/2 overflow-hidden">
-      <div className="bg-white  shadow-lg  rounded-lg mx-auto">
+      <div className="bg-white  shadow-lg dark:shadow-gray-900/50 rounded-lg mx-auto">
         {document.fileUrl ? (
           pdfLoading ? (
             <div className="flex flex-col justify-center items-center h-[500px] md:h-[700px] w-full">

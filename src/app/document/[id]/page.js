@@ -20,7 +20,7 @@ export default function DocumentPage({ params }) {
   
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [document, setDocument] = useState(null);
+  const [documentData, setDocumentData] = useState(null); // Renamed from document to documentData
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [pageInputValue, setPageInputValue] = useState(''); // New state for page input
@@ -68,6 +68,10 @@ export default function DocumentPage({ params }) {
     setIsPanelExpanded(expanded);
   };
 
+  // Add state for combined documents
+  const [sourceDocumentTabs, setSourceDocumentTabs] = useState([]);
+  const [activeSourceDocTab, setActiveSourceDocTab] = useState(0);
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
@@ -98,10 +102,24 @@ export default function DocumentPage({ params }) {
       if (docSnap.exists()) {
         const documentData = docSnap.data();
         console.log("Document data loaded:", documentData);
-        setDocument(documentData);
+        setDocumentData(documentData); // Updated from setDocument to setDocumentData
         setNotesContent(documentData.notes);
         setGeneratedContent(prev => ({...prev, notes: true}));
         
+        // Handle combined documents
+        if (documentData.isCombinedDocument && documentData.textContent) {
+          // Split the combined content by the separator we used
+          const sections = documentData.textContent.split('\n\n---\n\n');
+          
+          // Extract section titles from markdown headers
+          const tabs = sections.map(section => {
+            const titleMatch = section.match(/^## (.+?)(\n|$)/);
+            return titleMatch ? titleMatch[1] : 'Untitled Section';
+          });
+          
+          setSourceDocumentTabs(tabs);
+        }
+
         // Check if there are saved flashcards and set the state accordingly
         if (documentData.flashcards && documentData.flashcards.length > 0) {
           setFlashcardsContent(documentData.flashcards);
@@ -133,7 +151,7 @@ export default function DocumentPage({ params }) {
   // Function to save extracted text to Firestore
   const saveExtractedTextToFirestore = async (text) => {
     try {
-      if (!user || !document) return;
+      if (!user || !documentData) return; // Updated from document to documentData
       
       const uidFromParams = searchParams.get('uid');
       const userId = uidFromParams || user.uid;
@@ -155,7 +173,7 @@ export default function DocumentPage({ params }) {
     setPdfLoading(false);
     
     // Check if we need to extract text content
-    if (!document.extractedText || document.extractedText.trim() === '') {
+    if (!documentData.extractedText || documentData.extractedText.trim() === '') { // Updated from document to documentData
       extractAllPagesContent(numPages);
     }
   };
@@ -186,7 +204,7 @@ export default function DocumentPage({ params }) {
         return;
       }
 
-      const loadingTask = pdfjs.getDocument(document.fileUrl);
+      const loadingTask = pdfjs.getDocument(documentData.fileUrl); // Updated from document to documentData
       const pdfDoc = await loadingTask.promise;
 
       let allText = '';
@@ -213,7 +231,7 @@ export default function DocumentPage({ params }) {
             
             // Render page to canvas for OCR
             const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement('canvas');
+            const canvas = window.document.createElement('canvas'); // Fixed: use window.document instead of document
             const context = canvas.getContext('2d');
             canvas.width = viewport.width;
             canvas.height = viewport.height;
@@ -283,7 +301,7 @@ export default function DocumentPage({ params }) {
   // Add function to save notes to Firestore
   const saveNotesToFirestore = async (notes) => {
     try {
-      if (!user || !document) return;
+      if (!user || !documentData) return; // Updated from document to documentData
       
       const uidFromParams = searchParams.get('uid');
       const userId = uidFromParams || user.uid;
@@ -302,7 +320,7 @@ export default function DocumentPage({ params }) {
   // Add function to save flashcards to Firestore
   const saveFlashcardsToFirestore = async (flashcards) => {
     try {
-      if (!user || !document) return;
+      if (!user || !documentData) return; // Updated from document to documentData
       
       const uidFromParams = searchParams.get('uid');
       const userId = uidFromParams || user.uid;
@@ -321,7 +339,7 @@ export default function DocumentPage({ params }) {
   // Add function to save test questions to Firestore
   const saveTestToFirestore = async (questions) => {
     try {
-      if (!user || !document) return;
+      if (!user || !documentData) return; // Updated from document to documentData
 
       const uidFromParams = searchParams.get('uid');
       const userId = uidFromParams || user.uid;
@@ -345,7 +363,7 @@ export default function DocumentPage({ params }) {
         return;
       }
 
-      if (!user || !document) return;
+      if (!user || !documentData) return; // Updated from document to documentData
       
       const uidFromParams = searchParams.get('uid');
       const userId = uidFromParams || user.uid;
@@ -376,7 +394,7 @@ export default function DocumentPage({ params }) {
         return;
       }
 
-      if (!user || !document) return;
+      if (!user || !documentData) return; // Updated from document to documentData
       
       const uidFromParams = searchParams.get('uid');
       const userId = uidFromParams || user.uid;
@@ -407,7 +425,7 @@ export default function DocumentPage({ params }) {
         return;
       }
 
-      if (!user || !document) return;
+      if (!user || !documentData) return; // Updated from document to documentData
 
       const uidFromParams = searchParams.get('uid');
       const userId = uidFromParams || user.uid;
@@ -449,7 +467,7 @@ export default function DocumentPage({ params }) {
         }
         
         // Use the extracted PDF text content if available
-        const docText = pdfTextContent || document?.extractedText || 
+        const docText = pdfTextContent || documentData?.extractedText || // Updated from document to documentData
                         "This is a sample document for testing note generation. " +
                         "Please upload a real document with text content for proper notes.";
         
@@ -507,7 +525,7 @@ export default function DocumentPage({ params }) {
         }
         
         // Use the extracted PDF text content if available
-        const docText = pdfTextContent || document?.extractedText || 
+        const docText = pdfTextContent || documentData?.extractedText || // Updated from document to documentData
                         "This is a sample document for testing flashcard generation. " +
                         "Please upload a real document with text content for proper flashcards.";
         
@@ -574,7 +592,7 @@ export default function DocumentPage({ params }) {
         }
         
         // Use the extracted PDF text content if available
-        const docText = pdfTextContent || document?.extractedText || 
+        const docText = pdfTextContent || documentData?.extractedText || // Updated from document to documentData
                         "This is a sample document for testing test generation. " +
                         "Please upload a real document with text content for proper tests.";
         
@@ -662,10 +680,10 @@ export default function DocumentPage({ params }) {
 
   // Download PDF function
   const downloadPdf = () => {
-    if (document.fileUrl) {
-      const link = window.document.createElement('a');
-      link.href = document.fileUrl;
-      link.download = document.fileName || 'document.pdf';
+    if (documentData.fileUrl) { // Updated from document to documentData
+      const link = window.document.createElement('a'); // Use window.document to be explicit
+      link.href = documentData.fileUrl;
+      link.download = documentData.fileName || 'document.pdf';
       link.target = '_blank';
       link.click();
     }
@@ -681,7 +699,7 @@ export default function DocumentPage({ params }) {
     );
   }
 
-  if (!document) {
+  if (!documentData) { // Updated from document to documentData
     return (
       <div className="min-h-screen bg-gray-50 ">
         <div className="flex flex-col justify-center items-center min-h-[calc(100vh-64px)]">
@@ -701,9 +719,9 @@ export default function DocumentPage({ params }) {
     <div className="min-h-screen bg-gray-50 ">
       <div className="container mx-auto px-4 py-6">
         <div className="mb-4 md:mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 ">{document.fileName}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 ">{documentData.fileName}</h1>
           <p className="text-sm text-gray-500 ">
-            {document.createdAt?.toDate ? new Date(document.createdAt.toDate()).toLocaleDateString() : 'Unknown date'}
+            {documentData.createdAt?.toDate ? new Date(documentData.createdAt.toDate()).toLocaleDateString() : 'Unknown date'}
           </p>
         </div>
 
@@ -711,19 +729,19 @@ export default function DocumentPage({ params }) {
           {/* Document Viewer Panel - Left Side - Hidden when panel is expanded */}
           {!isPanelExpanded && (
             <div className="w-full lg:w-1/2 ">
-              <div className="bg-white  shadow-lg  rounded-lg mx-auto">
-                {document.sourceType === 'youtube' ? (
+              <div className="bg-white  shadow-lg dark:shadow-gray-900/50 rounded-lg mx-auto border-l-4 border-[#58b595] " >
+                {documentData.sourceType === 'youtube' ? ( // Updated from document to documentData
                   // Render YouTube iframe for YouTube videos
                   <div className="w-full h-[500px] md:h-[700px] border-0 overflow-auto bg-white  p-6">
                     <div className="mb-4 border-b pb-2">
                       <h2 className="text-xl font-semibold text-gray-800 ">
-                        {document.fileName}
+                        {documentData.fileName}
                       </h2>
                     </div>
                     <div className="aspect-video w-full">
                       <iframe 
-                        src={`https://www.youtube.com/embed/${document.youtubeVideoId}`}
-                        title={document.fileName || "YouTube Video"} 
+                        src={`https://www.youtube.com/embed/${documentData.youtubeVideoId}`}
+                        title={documentData.fileName || "YouTube Video"} 
                         frameBorder="0" 
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                         allowFullScreen
@@ -731,19 +749,52 @@ export default function DocumentPage({ params }) {
                       ></iframe>
                     </div>
                   </div>
-                ) : document.isTextDocument ? (
+                ) : documentData.isTextDocument ? ( // Updated from document to documentData
                   <div className="w-full h-[500px] md:h-[700px] border-0 overflow-auto bg-white  p-6">
                     <div className="mb-4 border-b pb-2">
                       <h2 className="text-xl font-semibold text-gray-800 ">
-                        {document.fileName}
+                        {documentData.fileName}
                       </h2>
+                      
+                      {/* Display tabs for combined document */}
+                      {documentData.isCombinedDocument && sourceDocumentTabs.length > 0 && (
+                        <div className="flex overflow-x-auto mt-2 pb-2 space-x-1">
+                          {sourceDocumentTabs.map((tabName, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setActiveSourceDocTab(index)}
+                              className={`px-3 py-1 text-sm whitespace-nowrap rounded-md ${
+                                activeSourceDocTab === index 
+                                  ? 'bg-[#58b595] text-white' 
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              {tabName}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="prose  max-w-none">
-                      {document.textContent?.split('\n').map((line, index) => (
-                        <p key={index} className="my-2">
-                          {line || <br />}
-                        </p>
-                      ))}
+                    
+                    <div className="prose dark:prose-invert max-w-none">
+                      {documentData.isCombinedDocument && sourceDocumentTabs.length > 0 ? (
+                        // For combined documents, show the active section
+                        documentData.textContent?.split('\n\n---\n\n')[activeSourceDocTab]
+                          ?.replace(/^## .+?\n/, '') // Remove the section header
+                          .split('\n')
+                          .map((line, index) => (
+                            <p key={index} className="my-2">
+                              {line || <br />}
+                            </p>
+                          ))
+                      ) : (
+                        // For regular text documents
+                        documentData.textContent?.split('\n').map((line, index) => (
+                          <p key={index} className="my-2">
+                            {line || <br />}
+                          </p>
+                        ))
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -836,7 +887,7 @@ export default function DocumentPage({ params }) {
                     {/* PDF Container with horizontal scroll enabled */}
                     <div className="w-full h-[500px] md:h-[700px] border-0 overflow-x-auto overflow-y-auto">
                       <Document
-                        file={document.fileUrl}
+                        file={documentData.fileUrl} // Updated from document to documentData
                         onLoadSuccess={onDocumentLoadSuccess}
                         loading={
                           <div className="flex justify-center items-center h-full">
@@ -871,14 +922,14 @@ export default function DocumentPage({ params }) {
           
           {/* Interactive Panel - Right Side - Full width when expanded */}
           <InteractivePanel
-            document={document}
+            document={documentData} // Updated from document to documentData
             documentId={documentId}
             activeTab={activeTab}
             generatedContent={generatedContent}
             notesContent={notesContent}
             notesError={notesError}
             flashcardsContent={flashcardsContent}
-            flashca rdsError={flashcardsError}
+            flashcardsError={flashcardsError}
             testQuestions={testQuestions}
             testError={testError}
             isGenerating={isGenerating}

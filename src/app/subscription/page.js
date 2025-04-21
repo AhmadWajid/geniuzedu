@@ -328,8 +328,8 @@ export default function SubscriptionPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="mt-6 p-4 bg-red-50  border border-red-100  rounded-lg">
-                    <p className="text-red-600 ">
+                  <div className="mt-6 p-4 bg-red-50  border border-red-100 dark:border-red-800 rounded-lg">
+                    <p className="text-red-600 dark:text-red-400">
                       Your subscription has been canceled and will end on {formatDate(subscription.endDate)}.
                     </p>
                     
@@ -349,7 +349,7 @@ export default function SubscriptionPage() {
                 
                 {billingHistory.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 ">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                       <thead className="bg-gray-50  ">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  uppercase tracking-wider">Date</th>
@@ -358,7 +358,7 @@ export default function SubscriptionPage() {
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500  uppercase tracking-wider">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white  divide-y divide-gray-200 ">
+                      <tbody className="bg-white  divide-y divide-gray-200 dark:divide-gray-800">
                         {billingHistory.map((item) => (
                           <tr key={item.id}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 ">{formatDate(item.date)}</td>
@@ -366,9 +366,9 @@ export default function SubscriptionPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 ">${item.amount.toFixed(2)}</td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                item.status === 'paid' ? 'bg-green-100 text-green-800   :
-                                item.status === 'failed' ? 'bg-red-100 text-red-800   : 
-                                'bg-yellow-100 text-yellow-800  
+                                item.status === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' :
+                                item.status === 'failed' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : 
+                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
                               }`}>
                                 {item.status}
                               </span>

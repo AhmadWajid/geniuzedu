@@ -112,7 +112,7 @@ export default function PricePage() {
     },
     {
       id: "promax",
-      name: "Pro Max",
+      name: "Beyond",
       description: "Ideal for power users or professionals seeking top-tier capabilities and priority service.",
       monthlyPrice: 9.99,
       yearlyPrice: 99.99, // ~$20 savings for annual billing

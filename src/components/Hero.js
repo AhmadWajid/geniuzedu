@@ -47,7 +47,7 @@ const Hero = () => {
         {/* Right Column - Image */}
         <div className="flex flex-col items-center ml-5 w-[55%] max-lg:ml-0 max-lg:w-full">
           <div className="relative w-[600px] h-[482px] max-md:w-full max-md:h-[300px] rounded-2xl max-w-full">
-            <div className="relative w-full h-full shadow-[0_0_11px_0px_rgba(0,0,0,0.3)]  rounded-2xl overflow-hidden border border-gray-200  ">
+            <div className="relative w-full h-full shadow-[0_0_11px_0px_rgba(0,0,0,0.3)] dark:shadow-[0_0_15px_0px_rgba(255,255,255,0.1)] rounded-2xl overflow-hidden border border-gray-200  dark:bg-white">
               <Image 
                 src="/assets/logo.png" 
                 alt="Geniuz Edu Learning Interface" 

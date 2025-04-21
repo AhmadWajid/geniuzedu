@@ -4,6 +4,56 @@ import rehypeKatex from 'rehype-katex';
 import remarkGfm from 'remark-gfm';
 import 'katex/dist/katex.min.css';
 
+function remarkAutoMath() {
+  return (tree) => {
+    visit(tree, 'text', (node, index, parent) => {
+      if (!parent || parent.type === 'inlineMath' || parent.type === 'math') {
+        return
+      }
+
+      // match things like f^{-1}(x), \rightarrow, \in, \notin, etc.
+      const pattern = /[A-Za-z]+\^\{[^}]+\}\([^)]+\)|\\(?:rightarrow|in|notin|alpha|beta|gamma|dots)/g
+      let lastIndex = 0
+      let match
+      const newNodes = []
+
+      while ((match = pattern.exec(node.value)) !== null) {
+        const [snippet] = match
+        const start = match.index
+
+        // push preceding plain text
+        if (start > lastIndex) {
+          newNodes.push({
+            type: 'text',
+            value: node.value.slice(lastIndex, start),
+          })
+        }
+
+        // push the math node
+        newNodes.push({
+          type: 'inlineMath',
+          value: snippet,
+        })
+
+        lastIndex = start + snippet.length
+      }
+
+      // anything after last match
+      if (lastIndex < node.value.length) {
+        newNodes.push({
+          type: 'text',
+          value: node.value.slice(lastIndex),
+        })
+      }
+
+      // if we found at least one match, replace this text node
+      if (newNodes.length > 0) {
+        parent.children.splice(index, 1, ...newNodes)
+      }
+    })
+  }
+}
+
 export default function MarkdownViewer({ content }) {
   return (
     <div className="prose max-w-none">
@@ -19,7 +69,7 @@ export default function MarkdownViewer({ content }) {
           ),
           h2: ({ node, ...props }) => (
             <h2 className="text-2xl font-semibold text-gray-800  
-              mt-12 mb-6 pb-2 border-b border-[#58b595]/30 " {...props} />
+              mt-12 mb-6 pb-2 border-b border-[#58b595]/30 dark:border-gray-800" {...props} />
           ),
           h3: ({ node, ...props }) => (
             <h3 className="text-xl font-semibold text-gray-800 
@@ -46,8 +96,8 @@ export default function MarkdownViewer({ content }) {
             );
           },
           strong: ({ node, ...props }) => (
-            <strong className="font-semibold text-[#58b595]  
-              bg-[#f0faf7]  px-1 py-0.5 rounded" {...props} />
+            <strong className="font-semibold text-[#58b595] dark:text-[#fbbf24] 
+              bg-[#f0faf7] dark:bg-[#3a2e1e] px-1 py-0.5 rounded" {...props} />
           ),
           table: ({ node, ...props }) => (
             <div className="overflow-x-auto my-8 rounded-lg border border-gray-200  shadow-sm">
@@ -57,9 +107,9 @@ export default function MarkdownViewer({ content }) {
           thead: ({ node, ...props }) => (
             <thead className="bg-gray-50  " {...props} />
           ),
-          tbody: ({ node, ...props }) => <tbody className="divide-y divide-gray-200 " {...props} />,
+          tbody: ({ node, ...props }) => <tbody className="divide-y divide-gray-200 dark:divide-gray-700" {...props} />,
           tr: ({ node, ...props }) => (
-            <tr className="hover:bg-gray-50 " {...props} />
+            <tr className="hover:bg-gray-50 dark:hover:bg-gray-750" {...props} />
           ),
           th: ({ node, ...props }) => (
             <th className="py-3 px-4 font-medium text-gray-700 " {...props} />
@@ -86,8 +136,8 @@ export default function MarkdownViewer({ content }) {
             return <li className="text-gray-600 " {...props}>{children}</li>;
           },
           blockquote: ({ node, ...props }) => (
-            <blockquote className="border-l-4 rounded-r border-[#58b595]  pl-6 py-3 my-6 
-              bg-gradient-to-r from-[#58b595]/10 to-transparent  italic text-gray-700 " {...props} />
+            <blockquote className="border-l-4 rounded-r border-[#58b595] dark:border-[#fbbf24] pl-6 py-3 my-6 
+              bg-gradient-to-r from-[#58b595]/10 to-transparent dark:from-[#fbbf24]/10 italic text-gray-700 " {...props} />
           ),
           code: ({ node, inline, className, children, ...props }) => {
             const match = /language-(\w+)/.exec(className || '');
@@ -105,7 +155,7 @@ export default function MarkdownViewer({ content }) {
             <img className="max-w-full h-auto rounded-lg shadow-md my-6" {...props} />
           ),
           a: ({ node, ...props }) => (
-            <a className="text-[#58b595]  font-medium hover:underline 
+            <a className="text-[#58b595] dark:text-[#fbbf24] font-medium hover:underline 
               transition-colors duration-200" {...props} />
           ),
           pre: ({ node, ...props }) => (

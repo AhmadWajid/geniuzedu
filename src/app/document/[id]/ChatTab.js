@@ -88,7 +88,7 @@ const ChatTab = ({ document, documentId }) => {
             key={index} 
             className={`${
               message.role === 'user' 
-                ? 'bg-[#58b595]-100  ml-auto' 
+                ? 'bg-[#58b595]-100 dark:bg-[#58b595]-900 ml-auto' 
                 : 'bg-gray-100   mr-auto'
             } p-3 rounded-lg max-w-[80%] shadow-sm`}
           >

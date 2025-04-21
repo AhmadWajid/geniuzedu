@@ -71,7 +71,7 @@ export default function TestPanel({ questions, onBack }) {
       <div className="space-y-8">
         <button 
           onClick={resetTest}
-          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600  hover:text-[#58b595] dark:hover:text-[#58b595] transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600  hover:text-[#58b595]  transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
             <path d="M3 12h18M3 12L9 6M3 12l6 6"/>
@@ -105,8 +105,8 @@ export default function TestPanel({ questions, onBack }) {
                   key={index} 
                   className={`p-6 rounded-lg border-2 transform transition-all duration-300 hover:rotate-0 hover:scale-[1.01] ${
                     isCorrect 
-                      ? 'border-[#58b595] bg-[#edf7f4] dark:bg-[#58b595]/10' 
-                      : 'border-[#e68a30] bg-[#fdf4ea] dark:bg-[#e68a30]/10'
+                      ? 'border-[#58b595] bg-[#edf7f4]  '
+                      : 'border-[#e68a30] bg-[#fdf4ea]  '
                   }`}
                 >
                   <div className="flex items-start space-x-4">
@@ -115,11 +115,11 @@ export default function TestPanel({ questions, onBack }) {
                     }`}>
                       {index + 1}
                     </span>
-                    <div className="flex-1 mb-2">
+                    <div className="flex-1 mb-2 text-black">
                       <div className="text-lg font-semibold text-gray-900 ">
                         <MarkdownViewer
                                         content={question.question}
-                                        className="text-sm prose prose-sm max-w-none dark:prose-invert"></MarkdownViewer>
+                                        className="text-sm prose prose-sm max-w-none "></MarkdownViewer>
                       </div>
                       
                       <div className="mt-3 pl-2">
@@ -136,7 +136,7 @@ export default function TestPanel({ questions, onBack }) {
                                       : 'border-gray-200 '
                                 }`}
                               >
-                                <MarkdownViewer content={option} className="text-sm prose prose-sm max-w-none dark:prose-invert"></MarkdownViewer>
+                                <MarkdownViewer content={option} className="text-sm prose prose-sm max-w-none "></MarkdownViewer>
                               </div>
                             ))}
                           </div>
@@ -153,10 +153,10 @@ export default function TestPanel({ questions, onBack }) {
                             </div>
                             <div className={`p-2 rounded border ${
                               question.correctAnswer === 'False' 
-                                ? 'bg-[#edf7f4] border-[#58b595] ' 
+                                ? 'bg-[#edf7f4] border-[#58b595] text-black' 
                                 : selectedAnswers[index] === 'False' 
-                                  ? 'bg-[#fdf4ea] border-[#e68a30] ' 
-                                  : 'border-gray-200 '
+                                  ? 'bg-[#fdf4ea] border-[#e68a30] text-black' 
+                                  : 'border-gray-200 text-black'
                             }`}>
                               False
                             </div>
@@ -169,7 +169,7 @@ export default function TestPanel({ questions, onBack }) {
                           <span className="font-semibold">Explanation:</span> 
                           <MarkdownViewer
                           content={question.explanation}
-                          className="text-sm prose prose-sm max-w-none dark:prose-invert"></MarkdownViewer>
+                          className="text-sm prose prose-sm max-w-none "></MarkdownViewer>
                         </p>
                       </div>
                     </div>
@@ -188,7 +188,7 @@ export default function TestPanel({ questions, onBack }) {
     <div className="space-y-8">
       <button 
         onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600  hover:text-[#58b595] dark:hover:text-[#58b595] transition-colors"
+        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600  hover:text-[#58b595]  transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
           <path d="m12 19-7-7 7-7"></path>
@@ -209,7 +209,7 @@ export default function TestPanel({ questions, onBack }) {
             <div className="text-xl font-semibold text-gray-900  flex-1">
               <MarkdownViewer
                 content={question.question}
-                className="text-sm prose prose-sm max-w-none dark:prose-invert"></MarkdownViewer>
+                className="text-sm prose prose-sm max-w-none "></MarkdownViewer>
             </div>
           </div>
           
@@ -219,7 +219,7 @@ export default function TestPanel({ questions, onBack }) {
                 {question.options.map((option, optIndex) => (
                   <label 
                     key={optIndex} 
-                    className="relative flex items-start sm:items-center p-3 sm:p-4 bg-white   rounded-lg border-2 border-gray-200  cursor-pointer transform transition-all duration-200 hover:scale-[1.01] hover:border-[#58b595] dark:hover:border-[#58b595] group"
+                    className="relative flex items-start sm:items-center p-3 sm:p-4 bg-white   rounded-lg border-2 border-gray-200  cursor-pointer transform transition-all duration-200 hover:scale-[1.01] hover:border-[#58b595]  group"
                   >
                     <input 
                       type="radio" 
@@ -230,18 +230,18 @@ export default function TestPanel({ questions, onBack }) {
                       onChange={() => handleAnswerSelect(index, option)}
                     />
                     <span 
-                      className="ml-3 text-gray-800  group-hover:text-[#58b595] dark:group-hover:text-[#58b595] transition-colors"
+                      className="ml-3 text-gray-800  group-hover:text-[#58b595]  transition-colors"
                     >
                       <MarkdownViewer
                         content={option}
-                        className="text-sm prose prose-sm max-w-none dark:prose-invert"></MarkdownViewer>
+                        className="text-sm prose prose-sm max-w-none "></MarkdownViewer>
                     </span>
                   </label>
                 ))}
               </div>
             ) : (
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-6">
-                <label className="relative flex-1 flex items-center p-4 bg-white   rounded-lg border-2 border-gray-200  cursor-pointer transform transition-all duration-200 hover:scale-[1.01] hover:border-[#58b595] dark:hover:border-[#58b595] group">
+                <label className="relative flex-1 flex items-center p-4 bg-white   rounded-lg border-2 border-gray-200  cursor-pointer transform transition-all duration-200 hover:scale-[1.01] hover:border-[#58b595]  group">
                   <input 
                     type="radio" 
                     name={`question-${index}`} 
@@ -250,12 +250,12 @@ export default function TestPanel({ questions, onBack }) {
                     checked={selectedAnswers[index] === "True"}
                     onChange={() => handleAnswerSelect(index, "True")}
                   />
-                  <span className="ml-3 text-gray-800  group-hover:text-[#58b595] dark:group-hover:text-[#58b595] transition-colors">
+                  <span className="ml-3 text-gray-800  group-hover:text-[#58b595]  transition-colors">
                     True
                   </span>
                 </label>
                 
-                <label className="relative flex-1 flex items-center p-4 bg-white   rounded-lg border-2 border-gray-200  cursor-pointer transform transition-all duration-200 hover:scale-[1.01] hover:border-[#58b595] dark:hover:border-[#58b595] group">
+                <label className="relative flex-1 flex items-center p-4 bg-white   rounded-lg border-2 border-gray-200  cursor-pointer transform transition-all duration-200 hover:scale-[1.01] hover:border-[#58b595]  group">
                   <input 
                     type="radio" 
                     name={`question-${index}`} 
@@ -264,7 +264,7 @@ export default function TestPanel({ questions, onBack }) {
                     checked={selectedAnswers[index] === "False"}
                     onChange={() => handleAnswerSelect(index, "False")}
                   />
-                  <span className="ml-3 text-gray-800  group-hover:text-[#58b595] dark:group-hover:text-[#58b595] transition-colors">
+                  <span className="ml-3 text-gray-800  group-hover:text-[#58b595]  transition-colors">
                     False
                   </span>
                 </label>
