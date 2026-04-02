@@ -1,11 +1,23 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { auth } from '@/firebase/config';
 import { updateSubscription } from '@/lib/subscription';
 
-export default function PaymentSuccess() {
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#58b595] mx-auto mb-4"></div>
+        <h1 className="text-xl font-semibold mb-2">Processing your payment...</h1>
+        <p className="text-gray-600">Please wait while we confirm your subscription.</p>
+      </div>
+    </div>
+  );
+}
+
+function PaymentSuccessContent() {
   const [status, setStatus] = useState('loading');
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -80,13 +92,13 @@ export default function PaymentSuccess() {
     );
   }
 
+  return <LoadingFallback />;
+}
+
+export default function PaymentSuccess() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#58b595] mx-auto mb-4"></div>
-        <h1 className="text-xl font-semibold mb-2">Processing your payment...</h1>
-        <p className="text-gray-600">Please wait while we confirm your subscription.</p>
-      </div>
-    </div>
+    <Suspense fallback={<LoadingFallback />}>
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
