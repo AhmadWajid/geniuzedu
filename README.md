@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# GeniuzEdu - AI-Powered Learning Platform
 
-## Getting Started
+GeniuzEdu is a modern, AI-powered learning platform that helps students learn faster and more effectively through interactive study materials, smart summaries, and personalized learning tools.
 
-First, run the development server:
+## 🌟 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Core Features
+- **Document Processing**
+  - Upload PDFs and TXT files
+  - Process YouTube videos
+  - Support for lecture recordings
+  - Smart file size management
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### AI-Powered Learning Tools
+- **Smart Summaries**: Get instant AI-generated summaries of your study materials
+- **Interactive Flashcards**: Convert complex topics into easy-to-review flashcards
+- **Practice Tests**: Generate quizzes to evaluate your knowledge
+- **Smart Notes**: AI-assisted note-taking and organization
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### Chat & Analysis
+- AI-powered chat assistance
+- Area selection for focused learning
+- Voice generation capabilities
+- Real-time analysis and feedback
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 💰 Pricing Plans
 
-## Learn More
+### Basic (Free)
+- Process up to 2 PDFs/TXT files weekly
+- 20MB max file size
+- 1 lecture recording per month
+- Basic AI features
+- Limited chat messages
 
-To learn more about Next.js, take a look at the following resources:
+### Premium ($4.99/month or $49.99/year)
+- Process up to 10 PDFs/YouTube videos weekly
+- 30MB max file size
+- 10 lecture recordings per month
+- Enhanced AI features
+- More chat messages and selections
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Beyond ($9.99/month or $99.99/year)
+- Unlimited PDFs and YouTube videos
+- 40MB max file size
+- 45 lecture recordings per month
+- Premium AI features
+- Unlimited messages
+- Priority support
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🛠️ Technical Stack
 
-## Deploy on Vercel
+- **Frontend**: Next.js, React, TailwindCSS
+- **Backend**: Firebase
+- **Authentication**: Firebase Auth
+- **Database**: Firestore
+- **Payment Processing**: Stripe
+- **File Storage**: Firebase Storage
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🚀 Getting Started
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   ```
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_key
+   STRIPE_SECRET_KEY=your_stripe_secret
+   STRIPE_WEBHOOK_SECRET=your_webhook_secret
+   ```
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+## 🔒 Security
+
+- Secure authentication through Firebase
+- Protected API routes
+- Secure payment processing with Stripe
+- Regular security audits
+
+## 📱 Responsive Design
+
+- Mobile-first approach
+- Responsive layout for all screen sizes
+- Optimized user experience across devices
+
+## 🎨 UI/UX Features
+
+- Modern and clean interface
+- Intuitive navigation
+- Smooth animations and transitions
+- Accessible design
+- Dark mode support
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📞 Support
+
+For support, please contact our team through:
+- Email: [support@geniuzedu.com]
+- Website: [www.geniuzedu.com/support]
+- Documentation: [docs.geniuzedu.com] 

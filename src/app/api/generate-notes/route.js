@@ -16,8 +16,12 @@ const SYSTEM_PROMPTS = {
 // Add the ability to process different response formats
 const RESPONSE_PROCESSORS = {
   notes: (data) => {
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Failed to generate notes";
+    // Process the text to remove LaTeX preamble and document structure
+    const processedText = cleanupLatexPreamble(rawText);
+    
     return {
-      notes: data.candidates?.[0]?.content?.parts?.[0]?.text || "Failed to generate notes",
+      notes: processedText,
       tokens: data.usageMetadata?.totalTokenCount || 0
     };
   },
@@ -58,6 +62,88 @@ const RESPONSE_PROCESSORS = {
     }
   }
 };
+
+/**
+ * Cleans up LaTeX preamble and document structure from the generated content
+ * to make it compatible with Markdown rendering
+ */
+function cleanupLatexPreamble(text) {
+  // Check if the text starts with LaTeX preamble
+  if (text.includes('\\documentclass') || text.includes('\\begin{document}')) {
+    console.log('Detected LaTeX document structure, cleaning up...');
+    
+    // Remove LaTeX preamble
+    let cleaned = text;
+    
+    // Remove everything before \begin{document}
+    const beginDocIndex = cleaned.indexOf('\\begin{document}');
+    if (beginDocIndex !== -1) {
+      cleaned = cleaned.substring(beginDocIndex + '\\begin{document}'.length);
+    }
+    
+    // Remove \end{document} and everything after it
+    const endDocIndex = cleaned.indexOf('\\end{document}');
+    if (endDocIndex !== -1) {
+      cleaned = cleaned.substring(0, endDocIndex);
+    }
+    
+    // Remove any other LaTeX-specific commands that might interfere with Markdown
+    const latexCommands = [
+      '\\maketitle', 
+      '\\tableofcontents',
+      '\\newpage',
+      '\\clearpage',
+      '\\pagebreak'
+    ];
+    
+    latexCommands.forEach(cmd => {
+      cleaned = cleaned.replace(new RegExp(cmd, 'g'), '');
+    });
+    
+    // Replace \section with # and \subsection with ## for Markdown compatibility
+    cleaned = cleaned.replace(/\\section{([^}]+)}/g, '# $1');
+    cleaned = cleaned.replace(/\\subsection{([^}]+)}/g, '## $1');
+    cleaned = cleaned.replace(/\\subsubsection{([^}]+)}/g, '### $1');
+    
+    // Replace \textbf with ** for bold text
+    cleaned = cleaned.replace(/\\textbf{([^}]+)}/g, '**$1**');
+    
+    // Replace \textit with * for italic text
+    cleaned = cleaned.replace(/\\textit{([^}]+)}/g, '*$1*');
+    
+    // Ensure math expressions use $ and $$ instead of LaTeX environments
+    cleaned = cleaned.replace(/\\begin{equation\*?}([\s\S]*?)\\end{equation\*?}/g, '$$\n$1\n$$');
+    cleaned = cleaned.replace(/\\begin{align\*?}([\s\S]*?)\\end{align\*?}/g, '$$\n$1\n$$');
+    
+    console.log('LaTeX cleanup completed');
+    return cleaned.trim();
+  }
+  
+  // NEW CODE: Remove markdown code block wrappers
+  if (text.trim().startsWith('```') || text.match(/^```\w*\n/)) {
+    console.log('Detected markdown code block wrapper, removing...');
+    
+    let cleaned = text.trim();
+    
+    // Remove opening code fence with optional language identifier
+    cleaned = cleaned.replace(/^```\w*\n/, '');
+    
+    // Remove just the opening fence if there's no language identifier
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.substring(3);
+    }
+    
+    // Remove closing code fence
+    if (cleaned.endsWith('```')) {
+      cleaned = cleaned.substring(0, cleaned.length - 3);
+    }
+    
+    return cleaned.trim();
+  }
+  
+  // If no LaTeX preamble or code blocks detected, return the original text
+  return text;
+}
 
 // Utility function to call Gemini API
 async function callGeminiApi(prompt, contentType = 'notes') {

@@ -5,6 +5,22 @@ import { useRouter } from "next/navigation";
 import { auth, db, storage } from "../../firebase/config";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { collection, addDoc, getDocs, query, where, orderBy, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Helper function to format date
 const formatDate = (date) => {
@@ -37,7 +53,71 @@ export default function Dashboard() {
   const [combinedDocName, setCombinedDocName] = useState('');
   const [combiningDocs, setCombiningDocs] = useState(false);
   const [orderedDocuments, setOrderedDocuments] = useState([]); // New state for ordered docs
+  const [editingDocId, setEditingDocId] = useState(null);
+  const [editedName, setEditedName] = useState("");
   const router = useRouter();
+
+  // Define sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handle drag end function
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    
+    if (active.id !== over.id) {
+      setOrderedDocuments((items) => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
+        
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // Create a SortableItem component for the draggable items
+  function SortableItem({ doc, index }) {
+    const {
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+    } = useSortable({id: doc.id});
+    
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    };
+    
+    return (
+      <li
+        ref={setNodeRef}
+        style={style}
+        className="flex items-center p-2 bg-white rounded border border-gray-200 hover:border-[#58b595]"
+        {...attributes}
+        {...listeners}
+      >
+        <div className="mr-3 text-gray-500 flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+        </div>
+        <span className="text-gray-700 flex-1 truncate">
+          {index + 1}. {doc.fileName}
+        </span>
+      </li>
+    );
+  }
 
   const fetchUserDocuments = useCallback(async (userId) => {
     try {
@@ -217,6 +297,7 @@ export default function Dashboard() {
 
   const handleDocumentClick = (documentId) => {
     if (documentId === 'empty-state' || documentId === 'error-state') return;
+    if (editingDocId === documentId) return; // Don't navigate when editing
 
     if (isSelectionMode) {
       setSelectedDocuments(prevSelected => {
@@ -228,6 +309,61 @@ export default function Dashboard() {
       });
     } else {
       router.push(`/document/${documentId}?uid=${user.uid}`);
+    }
+  };
+
+  const startEditingDocument = (docId, currentName, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    setEditingDocId(docId);
+    setEditedName(currentName);
+  };
+
+  const cancelEditingDocument = (event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    setEditingDocId(null);
+    setEditedName("");
+  };
+
+  const updateDocumentName = async (docId, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    if (!editedName.trim() || !user) {
+      cancelEditingDocument();
+      return;
+    }
+
+    try {
+      if (!user.uid) {
+        throw new Error("User ID not available. Please try logging in again.");
+      }
+
+      const documentRef = doc(db, `users/${user.uid}/documents`, docId);
+      await updateDoc(documentRef, {
+        fileName: editedName.trim(),
+        lastUpdated: new Date()
+      });
+
+      // Update the local state
+      setDocuments(prevDocs => 
+        prevDocs.map(doc => 
+          doc.id === docId ? { ...doc, fileName: editedName.trim() } : doc
+        )
+      );
+
+      setEditingDocId(null);
+      setEditedName("");
+    } catch (error) {
+      console.error("Document name update error:", error);
+      setError(`Failed to update document name: ${error.message}`);
     }
   };
 
@@ -856,7 +992,55 @@ export default function Dashboard() {
                         <div className="flex items-start space-x-2">
                           <div className="flex-1 overflow-hidden">
                             <div className="flex items-center">
-                              <h3 className="font-medium text-gray-900  truncate  text-lg">{doc.fileName}</h3>
+                              {editingDocId === doc.id ? (
+                                <div className="flex-1 flex items-center" onClick={(e) => e.stopPropagation()}>
+                                  <input
+                                    type="text"
+                                    value={editedName}
+                                    onChange={(e) => setEditedName(e.target.value)}
+                                    className="flex-1 font-medium text-gray-900 py-1 px-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#58b595]"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') updateDocumentName(doc.id, e);
+                                      if (e.key === 'Escape') cancelEditingDocument(e);
+                                    }}
+                                  />
+                                  <div className="flex ml-2">
+                                    <button 
+                                      onClick={(e) => updateDocumentName(doc.id, e)}
+                                      className="p-1 text-[#58b595] hover:text-[#e68a30]"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M20 6L9 17l-5-5"/>
+                                      </svg>
+                                    </button>
+                                    <button 
+                                      onClick={cancelEditingDocument}
+                                      className="p-1 text-gray-500 hover:text-red-500"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                      </svg>
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <h3 className="font-medium text-gray-900  truncate  text-lg">{doc.fileName}</h3>
+                                  {!doc.isStorageNotice && !isSelectionMode && (
+                                    <button
+                                      onClick={(e) => startEditingDocument(doc.id, doc.fileName, e)}
+                                      className="ml-2 p-1 text-gray-400 hover:text-[#58b595]"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                      </svg>
+                                    </button>
+                                  )}
+                                </>
+                              )}
                               {doc.status === 'uploading' && (
                                 <span className="ml-2 px-3 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-200 sketchy-status">
                                   ⏳ Processing
@@ -882,7 +1066,7 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {!doc.isStorageNotice && !isSelectionMode && (
+                    {!doc.isStorageNotice && !isSelectionMode && !editingDocId && (
                       <button
                         onClick={(e) => handleDeleteDocument(doc.id, doc.storagePath, e)}
                         className={`absolute bottom-2 right-2 p-2 rounded-full sketchy-delete-btn
@@ -922,7 +1106,7 @@ export default function Dashboard() {
             <h3 className="text-xl font-bold mb-4">Combine Documents</h3>
             <p className="text-sm text-gray-600 mb-4">
               You're about to combine {selectedDocuments.length} documents into one. This will create a new document with all content merged together.
-              Use the arrows to arrange documents in the desired order.
+              Drag and drop items to arrange documents in the desired order.
             </p>
             
             <div className="mb-4">
@@ -940,34 +1124,24 @@ export default function Dashboard() {
             </div>
             
             <div className="text-sm bg-gray-100 p-3 rounded-md mb-4 max-h-60 overflow-y-auto">
-              <p className="font-medium mb-2">Arrange documents in desired order:</p>
-              <ul className="space-y-2">
-                {orderedDocuments.map((doc, index) => (
-                  <li key={doc.id} className="flex items-center justify-between p-2 bg-white rounded border border-gray-200">
-                    <span className="text-gray-700 flex-1 truncate">{index + 1}. {doc.fileName}</span>
-                    <div className="flex space-x-1">
-                      <button
-                        onClick={() => moveDocumentUp(index)}
-                        disabled={index === 0}
-                        className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-30"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="m18 15-6-6-6 6"/>
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => moveDocumentDown(index)}
-                        disabled={index === orderedDocuments.length - 1}
-                        className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-30"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="m6 9 6 6 6-6"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <p className="font-medium mb-2">Drag to arrange documents in desired order:</p>
+              
+              <DndContext 
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext 
+                  items={orderedDocuments.map(doc => doc.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ul className="space-y-2">
+                    {orderedDocuments.map((doc, index) => (
+                      <SortableItem key={doc.id} doc={doc} index={index} />
+                    ))}
+                  </ul>
+                </SortableContext>
+              </DndContext>
             </div>
 
             <div className="flex justify-end space-x-3">

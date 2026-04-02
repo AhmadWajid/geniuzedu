@@ -4,9 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { auth, db } from '../../../firebase/config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-// Import react-pdf components
 import { Document, Page, pdfjs } from 'react-pdf';
-// Import CSS for react-pdf
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import InteractivePanel from './InteractivePanel';
@@ -717,7 +715,7 @@ export default function DocumentPage({ params }) {
 
   return (
     <div className="min-h-screen bg-gray-50 ">
-      <div className="container mx-auto px-4 py-6">
+      <div className="mx-auto px-4 py-6">
         <div className="mb-4 md:mb-6">
           <h1 className="text-2xl font-bold text-gray-900 ">{documentData.fileName}</h1>
           <p className="text-sm text-gray-500 ">
